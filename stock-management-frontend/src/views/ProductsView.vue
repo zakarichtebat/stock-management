@@ -2,801 +2,875 @@
   <div class="products-view">
     <div class="container">
       <!-- En-tête -->
-      <div class="products-header">
-        <h1>📦 Gestion des Produits</h1>
-        <router-link to="/products/new" class="btn btn-primary">
-          ➕ Ajouter un produit
-        </router-link>
-      </div>
+      <header class="page-header">
+        <div class="header-content">
+          <h1 class="page-title">
+            <font-awesome-icon icon="box" /> Gestion des Produits
+          </h1>
+          <p class="page-subtitle">Gérez votre inventaire de produits</p>
+        </div>
+        <div class="header-actions">
+          <router-link to="/products/new" class="btn btn-primary">
+            <font-awesome-icon icon="plus" /> Nouveau Produit
+          </router-link>
+        </div>
+      </header>
 
       <!-- Filtres et recherche -->
-      <div class="filters-section card">
-        <h2>🔍 Recherche et Filtres</h2>
+      <section class="filters-section card">
+        <div class="section-header">
+          <h2 class="section-title">
+            <font-awesome-icon icon="filter" /> Filtres et Recherche
+          </h2>
+          <div class="section-actions">
+            <button @click="clearFilters" class="btn btn-secondary btn-sm">
+              <font-awesome-icon icon="eraser" /> Effacer
+            </button>
+          </div>
+        </div>
+
         <div class="filters-grid">
           <div class="form-group">
             <label class="form-label">Nom du produit</label>
-            <input
-              v-model="filters.name"
-              type="text"
-              class="form-input"
-              placeholder="Rechercher par nom..."
-              @input="debounceSearch"
-            />
+            <div class="input-group">
+              <font-awesome-icon icon="search" class="input-icon" />
+              <input
+                v-model="filters.name"
+                type="text"
+                class="form-input"
+                placeholder="Rechercher par nom..."
+                @input="debounceSearch"
+              />
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Catégorie</label>
-            <input
-              v-model="filters.category"
-              type="text"
-              class="form-input"
-              placeholder="Catégorie..."
-              @input="debounceSearch"
-            />
+            <div class="input-group">
+              <font-awesome-icon icon="tags" class="input-icon" />
+              <input
+                v-model="filters.category"
+                type="text"
+                class="form-input"
+                placeholder="Filtrer par catégorie..."
+                @input="debounceSearch"
+              />
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Fournisseur</label>
-            <input
-              v-model="filters.supplier"
-              type="text"
-              class="form-input"
-              placeholder="Fournisseur..."
-              @input="debounceSearch"
-            />
+            <div class="input-group">
+              <font-awesome-icon icon="truck" class="input-icon" />
+              <input
+                v-model="filters.supplier"
+                type="text"
+                class="form-input"
+                placeholder="Filtrer par fournisseur..."
+                @input="debounceSearch"
+              />
+            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Prix min</label>
-            <input
-              v-model="filters.minPrice"
-              type="number"
-              class="form-input"
-              placeholder="0"
-              min="0"
-              step="0.01"
-            />
+            <label class="form-label">Prix minimum</label>
+            <div class="input-group">
+              <font-awesome-icon icon="euro-sign" class="input-icon" />
+              <input
+                v-model="filters.minPrice"
+                type="number"
+                class="form-input"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                @input="debounceSearch"
+              />
+            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Prix max</label>
-            <input
-              v-model="filters.maxPrice"
-              type="number"
-              class="form-input"
-              placeholder="1000"
-              min="0"
-              step="0.01"
-            />
+            <label class="form-label">Prix maximum</label>
+            <div class="input-group">
+              <font-awesome-icon icon="euro-sign" class="input-icon" />
+              <input
+                v-model="filters.maxPrice"
+                type="number"
+                class="form-input"
+                placeholder="1000"
+                min="0"
+                step="0.01"
+                @input="debounceSearch"
+              />
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Statut</label>
-            <select v-model="filters.isActive" class="form-select">
-              <option value="">Tous</option>
-              <option value="true">Actif</option>
-              <option value="false">Inactif</option>
-            </select>
+            <div class="input-group">
+              <font-awesome-icon icon="toggle-on" class="input-icon" />
+              <select 
+                v-model="filters.isActive" 
+                class="form-select"
+                @change="debounceSearch"
+              >
+                <option value="">Tous les statuts</option>
+                <option value="true">Actif</option>
+                <option value="false">Inactif</option>
+              </select>
+            </div>
           </div>
         </div>
-
-        <div class="filters-actions">
-          <button @click="searchProducts" class="btn btn-primary">
-            🔍 Rechercher
-          </button>
-          <button @click="clearFilters" class="btn btn-secondary">
-            🗑️ Effacer
-          </button>
-          <button @click="loadProducts" class="btn btn-secondary">
-            📋 Tous les produits
-          </button>
-        </div>
-      </div>
+      </section>
 
       <!-- Résultats -->
-      <div class="products-results">
+      <section class="results-section">
         <div class="results-header">
-          <h2>
-            {{ displayedProducts.length }} produit(s) 
-            <span v-if="isSearching">trouvé(s)</span>
-          </h2>
+          <div class="results-info">
+            <h2 class="results-title">
+              <span class="results-count">{{ displayedProducts.length }}</span>
+              produit(s) {{ isSearching ? 'trouvé(s)' : '' }}
+            </h2>
+          </div>
+          
           <div class="view-toggle">
             <button 
               @click="viewMode = 'grid'" 
+              class="btn btn-icon"
               :class="{ active: viewMode === 'grid' }"
-              class="btn btn-secondary btn-sm"
+              title="Vue grille"
             >
-              🔲 Grille
+              <font-awesome-icon icon="th-large" />
             </button>
             <button 
               @click="viewMode = 'list'" 
+              class="btn btn-icon"
               :class="{ active: viewMode === 'list' }"
-              class="btn btn-secondary btn-sm"
+              title="Vue liste"
             >
-              📋 Liste
+              <font-awesome-icon icon="list" />
             </button>
           </div>
         </div>
 
-        <!-- Chargement -->
-        <div v-if="productStore.loading" class="loading">
-          Chargement des produits...
+        <!-- État de chargement -->
+        <div v-if="productStore.loading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Chargement des produits...</p>
         </div>
 
-        <!-- Aucun résultat -->
+        <!-- État vide -->
         <div v-else-if="displayedProducts.length === 0" class="empty-state">
-          <div class="empty-icon">📦</div>
+          <div class="empty-icon">
+            <font-awesome-icon icon="box-open" />
+          </div>
           <h3>Aucun produit trouvé</h3>
-          <p>Essayez de modifier vos critères de recherche ou ajoutez un nouveau produit.</p>
-          <router-link to="/products/new" class="btn btn-primary">
-            ➕ Ajouter le premier produit
+          <p>Modifiez vos critères de recherche ou ajoutez un nouveau produit.</p>
+          <router-link to="/products/new" class="btn btn-primary mt-3">
+            <font-awesome-icon icon="plus" /> Ajouter un produit
           </router-link>
         </div>
 
         <!-- Vue grille -->
-        <div v-else-if="viewMode === 'grid'" class="products-grid">
+        <div 
+          v-else-if="viewMode === 'grid'" 
+          class="products-grid"
+        >
           <div 
             v-for="product in displayedProducts" 
             :key="product.id" 
             class="product-card"
+            :class="{ 'inactive': !product.isActive }"
           >
             <div class="product-image">
               <img 
                 :src="product.imageUrl || defaultProductImage" 
                 :alt="product.name"
                 class="product-img"
+                @error="handleImageError"
               />
-            </div>
-            <div class="product-header">
-              <h3>{{ product.name }}</h3>
-              <span 
-                class="product-status" 
-                :class="{ active: product.isActive, inactive: !product.isActive }"
-              >
+              <div class="product-status" :class="{ active: product.isActive }">
                 {{ product.isActive ? 'Actif' : 'Inactif' }}
-              </span>
-            </div>
-
-            <div class="product-info">
-              <p class="product-category">{{ product.category }}</p>
-              <p class="product-supplier">Fournisseur: {{ product.supplier }}</p>
-              <div class="product-prices">
-                <span class="purchase-price">Achat: {{ product.purchasePrice }}€</span>
-                <span class="sale-price">Vente: {{ product.salePrice }}€</span>
               </div>
             </div>
 
-            <div class="product-stock">
-              <div class="stock-info">
-                <span class="stock-quantity" :class="{ 'low-stock': product.quantity <= 5 }">
-                  Stock: {{ product.quantity }}
-                </span>
-                <span class="min-stock">Min: {{ product.minStock || 0 }}</span>
+            <div class="product-content">
+              <div class="product-header">
+                <h3 class="product-name">{{ product.name }}</h3>
+                <div class="product-category" v-if="product.category">
+                  {{ product.category }}
+                </div>
               </div>
-              <div class="stock-actions">
-                <button 
-                  @click="quickUpdateStock(product.id, product.quantity - 1)"
-                  class="btn btn-secondary btn-sm"
-                  :disabled="product.quantity <= 0"
-                >
-                  -
-                </button>
-                <button 
-                  @click="quickUpdateStock(product.id, product.quantity + 1)"
-                  class="btn btn-secondary btn-sm"
-                >
-                  +
-                </button>
+
+              <div class="product-info">
+                <div class="info-item">
+                  <span class="info-label">Stock</span>
+                  <span class="info-value">{{ product.quantity }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Prix</span>
+                  <span class="info-value">{{ product.salePrice.toFixed(2) }} €</span>
+                </div>
               </div>
-            </div>
 
-            <div class="product-dates">
-              <p class="entry-date">
-                Entrée: {{ formatDate(product.entryDate) }}
-              </p>
-              <p 
-                v-if="product.expirationDate" 
-                class="expiration-date"
-                :class="{ 'expiring': isExpiringSoon(product.expirationDate) }"
-              >
-                Expire: {{ formatDate(product.expirationDate) }}
-              </p>
-            </div>
-
-            <div class="product-actions">
-              <router-link 
-                :to="`/products/${product.id}`" 
-                class="btn btn-primary btn-sm"
-              >
-                👁️ Voir
-              </router-link>
-              <router-link 
-                :to="`/products/${product.id}/edit`" 
-                class="btn btn-secondary btn-sm"
-              >
-                ✏️ Modifier
-              </router-link>
-              <button 
-                @click="deleteProduct(product.id)" 
-                class="btn btn-danger btn-sm"
-              >
-                🗑️ Supprimer
-              </button>
+              <div class="product-footer">
+                <div class="product-actions">
+                  <router-link 
+                    :to="`/products/${product.id}`"
+                    class="btn btn-icon"
+                    title="Voir les détails"
+                  >
+                    <font-awesome-icon icon="eye" />
+                  </router-link>
+                  <router-link 
+                    :to="`/products/${product.id}/edit`"
+                    class="btn btn-icon"
+                    title="Modifier"
+                  >
+                    <font-awesome-icon icon="edit" />
+                  </router-link>
+                  <button 
+                    class="btn btn-icon btn-danger"
+                    title="Supprimer"
+                    @click="deleteProduct(product.id)"
+                  >
+                    <font-awesome-icon icon="trash" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Vue liste -->
-        <div v-else class="products-list">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Nom</th>
-                <th>Catégorie</th>
-                <th>Stock</th>
-                <th>Prix Vente</th>
-                <th>Statut</th>
-                <th>Expiration</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="product in displayedProducts" :key="product.id">
-                <td class="product-list-image">
-                  <img 
-                    :src="product.imageUrl || defaultProductImage" 
-                    :alt="product.name"
-                    class="list-img"
-                  />
-                </td>
-                <td>
-                  <div class="product-name">{{ product.name }}</div>
-                  <div class="product-supplier text-muted">{{ product.supplier }}</div>
-                </td>
-                <td>{{ product.category }}</td>
-                <td>{{ product.quantity }}</td>
-                <td>{{ product.salePrice }}€</td>
-                <td>
-                  <span 
-                    class="status-badge" 
-                    :class="{ active: product.isActive, inactive: !product.isActive }"
-                  >
-                    {{ product.isActive ? 'Actif' : 'Inactif' }}
-                  </span>
-                </td>
-                <td>{{ formatDate(product.expirationDate) }}</td>
-                <td class="actions">
-                  <router-link 
-                    :to="'/products/' + product.id" 
-                    class="btn btn-info btn-sm"
-                    title="Voir les détails"
-                  >
-                    👁️
-                  </router-link>
-                  <router-link 
-                    :to="'/products/' + product.id + '/edit'" 
-                    class="btn btn-warning btn-sm"
-                    title="Modifier"
-                  >
-                    ✏️
-                  </router-link>
-                  <button 
-                    @click="deleteProduct(product.id)"
-                    class="btn btn-danger btn-sm"
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div 
+          v-else 
+          class="products-list"
+        >
+          <div class="list-header">
+            <div class="list-cell">Image</div>
+            <div class="list-cell">Nom</div>
+            <div class="list-cell">Catégorie</div>
+            <div class="list-cell">Stock</div>
+            <div class="list-cell">Prix</div>
+            <div class="list-cell">Fournisseur</div>
+            <div class="list-cell">Statut</div>
+            <div class="list-cell">Actions</div>
+          </div>
+
+          <div 
+            v-for="product in displayedProducts" 
+            :key="product.id" 
+            class="list-row"
+            :class="{ 'inactive': !product.isActive }"
+          >
+            <div class="list-cell">
+              <img 
+                :src="product.imageUrl || defaultProductImage" 
+                :alt="product.name"
+                class="product-thumbnail"
+                @error="handleImageError"
+              />
+            </div>
+            <div class="list-cell">
+              <div class="product-name">{{ product.name }}</div>
+              <div class="product-alerts" v-if="hasAlerts(product)">
+                <div 
+                  v-if="isLowStock(product)" 
+                  class="alert-badge warning"
+                  title="Stock faible"
+                >
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div 
+                  v-if="isExpiring(product)" 
+                  class="alert-badge danger"
+                  title="Expiration proche"
+                >
+                  <i class="fas fa-clock"></i>
+                </div>
+              </div>
+            </div>
+            <div class="list-cell">{{ product.category || '-' }}</div>
+            <div class="list-cell">
+              <span :class="getStockLevelClass(product)">
+                {{ product.quantity }}
+              </span>
+            </div>
+            <div class="list-cell">{{ formatPrice(product.salePrice) }}</div>
+            <div class="list-cell">{{ product.supplier || '-' }}</div>
+            <div class="list-cell">
+              <div class="status-badge" :class="{ active: product.isActive }">
+                {{ product.isActive ? 'Actif' : 'Inactif' }}
+              </div>
+            </div>
+            <div class="list-cell actions">
+              <router-link 
+                :to="'/products/' + product.id" 
+                class="btn btn-primary btn-icon btn-sm"
+                title="Voir détails"
+              >
+                <i class="fas fa-eye"></i>
+              </router-link>
+              <button 
+                @click="toggleProductStatus(product)"
+                class="btn btn-icon btn-sm"
+                :class="product.isActive ? 'btn-warning' : 'btn-success'"
+                :title="product.isActive ? 'Désactiver' : 'Activer'"
+              >
+                <i class="fas" :class="product.isActive ? 'fa-toggle-off' : 'fa-toggle-on'"></i>
+              </button>
+              <button 
+                @click="deleteProduct(product.id)"
+                class="btn btn-danger btn-icon btn-sm"
+                title="Supprimer"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Modal de confirmation -->
+    <div v-if="showDeleteModal" class="modal">
+      <div class="modal-overlay" @click="cancelDelete"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirmer la suppression</h3>
+          <button @click="cancelDelete" class="btn btn-icon">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Êtes-vous sûr de vouloir supprimer le produit 
+            <strong>{{ productToDelete?.name }}</strong> ?
+          </p>
+          <p class="text-danger">Cette action est irréversible.</p>
+        </div>
+        <div class="modal-footer">
+          <button @click="cancelDelete" class="btn btn-light">
+            Annuler
+          </button>
+          <button @click="confirmDelete" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Supprimer
+          </button>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, reactive, computed, onMounted } from 'vue'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { useProductStore } from '../stores/products'
+import { useRouter } from 'vue-router'
 import defaultProductImage from '../images/pexels-melovick24-10141956.jpg'
+import { debounce } from 'lodash'
 
-export default {
-  name: 'ProductsView',
-  setup() {
-    const productStore = useProductStore()
-    const viewMode = ref('grid')
-    const isSearching = ref(false)
-    let searchTimeout = null
+const productStore = useProductStore()
+const router = useRouter()
+const viewMode = ref('grid')
+const showDeleteModal = ref(false)
+const productToDelete = ref(null)
+const isSearching = ref(false)
 
-    const filters = reactive({
-      name: '',
-      category: '',
-      supplier: '',
-      minPrice: '',
-      maxPrice: '',
-      isActive: ''
+const filters = ref({
+  name: '',
+  category: '',
+  supplier: '',
+  minPrice: '',
+  maxPrice: '',
+  isActive: ''
+})
+
+const displayedProducts = computed(() => {
+  return productStore.filteredProducts || []
+})
+
+const handleImageError = (event) => {
+  event.target.src = defaultProductImage
+}
+
+const clearFilters = () => {
+  filters.value = {
+    name: '',
+    category: '',
+    supplier: '',
+    minPrice: '',
+    maxPrice: '',
+    isActive: ''
+  }
+  productStore.clearSearch()
+  debounceSearch()
+}
+
+const debounceSearch = debounce(async () => {
+  isSearching.value = true
+  try {
+    await productStore.searchProducts({
+      name: filters.value.name,
+      category: filters.value.category,
+      supplier: filters.value.supplier,
+      minPrice: filters.value.minPrice ? parseFloat(filters.value.minPrice) : undefined,
+      maxPrice: filters.value.maxPrice ? parseFloat(filters.value.maxPrice) : undefined,
+      isActive: filters.value.isActive === '' ? undefined : filters.value.isActive === 'true'
     })
+  } catch (error) {
+    console.error('Erreur lors de la recherche:', error)
+  } finally {
+    isSearching.value = false
+  }
+}, 300)
 
-    const displayedProducts = computed(() => {
-      return isSearching.value ? productStore.searchResults : productStore.products
+const getStockLevelClass = (product) => {
+  if (product.quantity <= 0) return 'stock-empty'
+  if (product.quantity <= product.minStock) return 'stock-low'
+  return 'stock-normal'
+}
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(price)
+}
+
+const isLowStock = (product) => {
+  return product.quantity <= product.minStock
+}
+
+const isExpiring = (product) => {
+  if (!product.expirationDate) return false
+  const expirationDate = new Date(product.expirationDate)
+  const today = new Date()
+  const daysUntilExpiration = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24))
+  return daysUntilExpiration <= 30
+}
+
+const hasAlerts = (product) => {
+  return isLowStock(product) || isExpiring(product)
+}
+
+const toggleProductStatus = async (product) => {
+  try {
+    await productStore.updateProduct({
+      ...product,
+      isActive: !product.isActive
     })
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut:', error)
+  }
+}
 
-    const searchProducts = async () => {
-      try {
-        isSearching.value = true
-        
-        // Préparer les filtres en convertissant les types
-        const searchFilters = {}
-        
-        // Copier les filtres non-vides
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-            if (key === 'minPrice' || key === 'maxPrice') {
-              // Convertir en nombre pour les prix
-              searchFilters[key] = parseFloat(value)
-            } else if (key === 'isActive') {
-              // Convertir en booléen
-              searchFilters[key] = value === 'true'
-            } else {
-              // Garder comme string pour les autres
-              searchFilters[key] = value
-            }
-          }
-        })
-        
-        await productStore.searchProducts(searchFilters)
-      } catch (error) {
-        console.error('Erreur lors de la recherche:', error)
-        alert('Erreur lors de la recherche. Vérifiez vos critères.')
-      }
-    }
-
-    const debounceSearch = () => {
-      // Annuler la recherche précédente si elle existe
-      if (searchTimeout) {
-        clearTimeout(searchTimeout)
-      }
-      
-      // Programmer une nouvelle recherche après 500ms
-      searchTimeout = setTimeout(() => {
-        searchProducts()
-      }, 500)
-    }
-
-    const clearFilters = () => {
-      Object.keys(filters).forEach(key => {
-        filters[key] = ''
-      })
-      isSearching.value = false
-      productStore.clearSearch()
-    }
-
-    const loadProducts = async () => {
-      try {
-        isSearching.value = false
-        productStore.clearSearch()
-        await productStore.fetchProducts()
-      } catch (error) {
-        console.error('Erreur lors du chargement:', error)
-      }
-    }
-
-    const quickUpdateStock = async (productId, newQuantity) => {
-      if (newQuantity < 0) return
-      
-      try {
-        await productStore.updateStock(productId, newQuantity)
-      } catch (error) {
-        console.error('Erreur lors de la mise à jour du stock:', error)
-      }
-    }
-
-    const deleteProduct = async (productId) => {
-      if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return
-
-      try {
-        await productStore.deleteProduct(productId)
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error)
-      }
-    }
-
-    const formatDate = (dateString) => {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('fr-FR')
-    }
-
-    const isExpiringSoon = (expirationDate) => {
-      const expDate = new Date(expirationDate)
-      const now = new Date()
-      const diffTime = expDate.getTime() - now.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      return diffDays <= 30 && diffDays > 0
-    }
-
-    onMounted(() => {
-      loadProducts()
-    })
-
-    return {
-      productStore,
-      viewMode,
-      isSearching,
-      filters,
-      displayedProducts,
-      searchProducts,
-      debounceSearch,
-      clearFilters,
-      loadProducts,
-      quickUpdateStock,
-      deleteProduct,
-      formatDate,
-      isExpiringSoon,
-      defaultProductImage,
+const deleteProduct = async (productId) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+    try {
+      await productStore.deleteProduct(productId)
+      await productStore.fetchProducts()
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
     }
   }
 }
+
+const confirmDelete = () => {
+  showDeleteModal.value = false
+  productToDelete.value = null
+}
+
+const cancelDelete = () => {
+  showDeleteModal.value = false
+  productToDelete.value = null
+}
+
+onMounted(async () => {
+  try {
+    await productStore.fetchProducts()
+  } catch (error) {
+    console.error('Erreur lors du chargement initial:', error)
+  }
+})
 </script>
 
 <style scoped>
-.products-view {
-  max-width: 1200px;
-  margin: 0 auto;
+/* Variables locales */
+:root {
+  --card-border-radius: 12px;
+  --transition-speed: 0.3s;
 }
 
-.products-header {
+/* Structure de la page */
+.products-view {
+  min-height: 100vh;
+  padding: var(--spacing-4) 0;
+  background-color: var(--light-color);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+}
+
+/* En-tête de la page */
+.page-header {
+  margin-bottom: var(--spacing-4);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
 }
 
-.products-header h1 {
-  color: #2c3e50;
+.page-title {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--secondary-color);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
+.page-title i {
+  color: var(--primary-color);
+}
+
+.page-subtitle {
+  margin: var(--spacing-2) 0 0;
+  color: var(--gray-color);
+  font-size: var(--font-size-sm);
+}
+
+/* Section des filtres */
 .filters-section {
-  margin-bottom: 2rem;
+  background: white;
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
 }
 
-.filters-section h2 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-4);
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--secondary-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title i {
+  color: var(--primary-color);
+  font-size: 1rem;
 }
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-4);
 }
 
-.filters-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+/* Formulaires et inputs */
+.form-group {
+  margin-bottom: var(--spacing-3);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--spacing-2);
+  color: var(--secondary-color);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+}
+
+.input-group {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: var(--spacing-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-color);
+  font-size: 1rem;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) calc(var(--spacing-3) * 2 + 16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: white;
+  color: var(--secondary-color);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-speed);
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--gray-color);
+}
+
+/* Résultats */
+.results-section {
+  margin-top: var(--spacing-4);
 }
 
 .results-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-4);
 }
 
-.results-header h2 {
-  color: #2c3e50;
+.results-title {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--secondary-color);
   margin: 0;
+}
+
+.results-count {
+  color: var(--primary-color);
 }
 
 .view-toggle {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
-.view-toggle button.active {
-  background-color: #3498db;
-  color: white;
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  color: var(--gray-color);
+  background: white;
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-speed);
 }
 
+.btn-icon:hover,
+.btn-icon.active {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+/* Grille de produits */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-4);
 }
 
 .product-card {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s;
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  transition: all var(--transition-speed);
+  position: relative;
 }
 
 .product-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: var(--box-shadow-lg);
 }
 
 .product-image {
-  margin-bottom: 1rem;
+  position: relative;
+  padding-top: 75%;
+  background: var(--light-color);
+  overflow: hidden;
 }
 
-.product-image img {
+.product-img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 200px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  transition: transform var(--transition-speed);
 }
 
-.product-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-}
-
-.product-header h3 {
-  color: #2c3e50;
-  margin: 0;
-  flex: 1;
+.product-card:hover .product-img {
+  transform: scale(1.05);
 }
 
 .product-status {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
+  position: absolute;
+  top: var(--spacing-3);
+  right: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  background: rgba(var(--gray-rgb), 0.9);
+  color: white;
 }
 
 .product-status.active {
-  background-color: #d4edda;
-  color: #155724;
+  background: rgba(var(--success-rgb), 0.9);
 }
 
-.product-status.inactive {
-  background-color: #f8d7da;
-  color: #721c24;
+.product-content {
+  padding: var(--spacing-4);
 }
 
-.product-info {
-  margin-bottom: 1rem;
+.product-header {
+  margin-bottom: var(--spacing-3);
+}
+
+.product-name {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--secondary-color);
+  margin: 0 0 var(--spacing-2);
+  line-height: 1.4;
 }
 
 .product-category {
-  color: #7f8c8d;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+  display: inline-block;
+  padding: var(--spacing-1) var(--spacing-2);
+  background: var(--light-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--gray-color);
+  font-size: var(--font-size-sm);
 }
 
-.product-supplier {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+.product-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
 }
 
-.product-prices {
+.info-item {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
 }
 
-.purchase-price {
-  color: #e74c3c;
-  font-size: 0.9rem;
+.info-label {
+  font-size: var(--font-size-sm);
+  color: var(--gray-color);
+  margin-bottom: var(--spacing-1);
 }
 
-.sale-price {
-  color: #27ae60;
-  font-weight: 600;
+.info-value {
+  font-weight: var(--font-weight-medium);
+  color: var(--secondary-color);
 }
 
-.product-stock {
+.product-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--border-color);
 }
 
-.stock-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stock-quantity {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.stock-quantity.low-stock {
-  color: #e74c3c;
-}
-
-.min-stock {
-  font-size: 0.8rem;
-  color: #7f8c8d;
-}
-
-.stock-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.product-dates {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: #7f8c8d;
-}
-
-.product-dates p {
-  margin: 0.25rem 0;
-}
-
-.expiration-date.expiring {
-  color: #e74c3c;
-  font-weight: 600;
+.product-price {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
 }
 
 .product-actions {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: var(--spacing-2);
 }
 
-.btn-sm {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-}
-
-.products-list {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-  vertical-align: middle;
-}
-
-.table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table tr:hover {
-  background: #f8f9fa;
-}
-
-.product-list-image {
-  width: 60px;
-  padding: 4px !important;
-}
-
-.list-img {
-  width: 50px;
-  height: 50px;
-  border-radius: 6px;
-  object-fit: cover;
-}
-
-.product-name {
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.product-supplier {
-  font-size: 0.85em;
-  color: #666;
-}
-
-.text-muted {
-  color: #6c757d;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.85em;
-  font-weight: 500;
-}
-
-.status-badge.active {
-  background: #d4edda;
-  color: #155724;
-}
-
-.status-badge.inactive {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
+/* États */
+.loading-state,
 .empty-state {
   text-align: center;
-  padding: 3rem;
-  color: #7f8c8d;
+  padding: var(--spacing-6);
+  background: white;
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--light-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  margin: 0 auto var(--spacing-4);
+  animation: spin 1s linear infinite;
 }
 
 .empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  font-size: 3rem;
+  color: var(--gray-color);
+  margin-bottom: var(--spacing-4);
 }
 
-.empty-state h3 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-}
-
-.low-stock {
-  color: #e74c3c !important;
-  font-weight: 600;
-}
-
-.expiring {
-  color: #e74c3c !important;
-  font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .products-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+/* Responsive */
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  .results-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+}
+
+@media (max-width: 992px) {
+  .filters-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
-  
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
   .filters-grid {
     grid-template-columns: 1fr;
   }
-  
-  .filters-actions {
-    flex-direction: column;
+
+  .products-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .product-stock {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .product-actions {
-    justify-content: center;
+
+  .btn {
+    width: 100%;
   }
 }
-</style> 
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

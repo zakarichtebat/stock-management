@@ -318,17 +318,18 @@ export default {
       return date.toLocaleDateString('fr-FR')
     }
 
-    const adjustStock = async (adjustment) => {
+    async function adjustStock(amount) {
+      if (!product.value) return
       try {
-        await productStore.adjustStock(product.value.id, adjustment)
+        await productStore.adjustStock(product.value.id, amount)
       } catch (error) {
         console.error('Erreur lors de l\'ajustement du stock:', error)
       }
     }
 
-    const updateStock = async () => {
-      if (newStock.value === '' || isNaN(newStock.value)) return
-
+    async function updateStock() {
+      if (!product.value || newStock.value === '') return
+      
       try {
         await productStore.updateStock(product.value.id, parseInt(newStock.value))
         showStockModal.value = false

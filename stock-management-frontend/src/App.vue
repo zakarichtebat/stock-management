@@ -1,45 +1,15 @@
 <template>
   <div id="app">
-    <!-- Barre de navigation -->
-    <nav v-if="authStore.isAuthenticated" class="navbar">
-      <div class="nav-container">
-        <!-- Logo -->
-        <div class="nav-logo">
-          <router-link to="/dashboard" class="logo-link">
-            📦 Stock Management
-          </router-link>
-        </div>
-
-        <!-- Menu principal -->
-        <div class="nav-menu">
-          <router-link to="/dashboard" class="nav-link">
-            📊 Dashboard
-          </router-link>
-          <router-link to="/products" class="nav-link">
-            📦 Produits
-          </router-link>
-          <router-link to="/alerts" class="nav-link">
-            🚨 Alertes
-            <span v-if="expiringCount > 0" class="alert-badge">{{ expiringCount }}</span>
-          </router-link>
-          <router-link to="/stats" class="nav-link">
-            📈 Statistiques
-          </router-link>
-        </div>
-
-        <!-- Menu utilisateur -->
-        <div class="nav-user">
-          <span class="user-name">{{ authStore.user?.name }}</span>
-          <button @click="handleLogout" class="logout-btn">
-            🚪 Déconnexion
-          </button>
-        </div>
-      </div>
-    </nav>
+    <!-- Navigation -->
+    <NavBar v-if="isAuthenticated" />
 
     <!-- Contenu principal -->
-    <main class="main-content" :class="{ 'with-nav': authStore.isAuthenticated }">
-      <router-view />
+    <main class="main-content" :class="{ 'with-nav': isAuthenticated }">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
 
     <!-- Notifications -->
@@ -50,19 +20,27 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
 import { useProductStore } from './stores/products'
+import NavBar from './components/NavBar.vue'
 
 export default {
   name: 'App',
+  
+  components: {
+    NavBar
+  },
+  
   setup() {
     const authStore = useAuthStore()
     const router = useRouter()
     const notification = ref(null)
     const productStore = useProductStore()
     const expiringCount = ref(0)
+    
+    const isAuthenticated = computed(() => authStore.isAuthenticated)
 
     const handleLogout = async () => {
       try {
@@ -105,7 +83,7 @@ export default {
     })
 
     return {
-      authStore,
+      isAuthenticated,
       handleLogout,
       notification,
       showNotification,
@@ -128,6 +106,8 @@ export default {
   color: #333;
   background-color: #f5f5f5;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Barre de navigation */
@@ -202,12 +182,12 @@ export default {
 
 /* Contenu principal */
 .main-content {
-  min-height: 100vh;
-  padding: 2rem;
+  flex: 1;
+  padding: 2rem 0;
 }
 
 .main-content.with-nav {
-  min-height: calc(100vh - 80px);
+  padding-top: 4rem;
 }
 
 /* Notifications */
@@ -398,5 +378,16 @@ export default {
   font-size: 0.75rem;
   margin-left: 4px;
   font-weight: bold;
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

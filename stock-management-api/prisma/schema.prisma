@@ -30,20 +30,88 @@ enum UserRole {
 }
 
 model Product {
-  id             Int       @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
   quantity       Int
-  entryDate      DateTime  @default(now())
+  entryDate      DateTime      @default(now())
   expirationDate DateTime?
   purchasePrice  Float
   salePrice      Float
   description    String?
   category       String?
   supplier       String?
-  barcode        String?   @unique
-  minStock       Int?      @default(5)
-  isActive       Boolean   @default(true)
-  imageUrl       String?   @db.Text
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  barcode        String?       @unique
+  minStock       Int?          @default(5)
+  isActive       Boolean       @default(true)
+  imageUrl       String?       @db.Text
+  quoteItems     QuoteItem[]
+  invoiceItems   InvoiceItem[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Quote {
+  id            Int         @id @default(autoincrement())
+  number        String      @unique
+  date          DateTime    @default(now())
+  clientName    String
+  clientEmail   String?
+  clientAddress String?
+  items         QuoteItem[]
+  subtotal      Float
+  taxRate       Float       @default(20)
+  taxAmount     Float
+  discount      Float       @default(0)
+  total         Float
+  status        String      @default("DRAFT")
+  invoice       Invoice?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model QuoteItem {
+  id        Int      @id @default(autoincrement())
+  quoteId   Int
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  total     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id            Int           @id @default(autoincrement())
+  number        String        @unique
+  date          DateTime      @default(now())
+  dueDate       DateTime
+  clientName    String
+  clientEmail   String?
+  clientAddress String?
+  items         InvoiceItem[]
+  subtotal      Float
+  taxRate       Float         @default(20)
+  taxAmount     Float
+  discount      Float         @default(0)
+  total         Float
+  status        String        @default("PENDING")
+  quoteId       Int?          @unique
+  quote         Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id        Int      @id @default(autoincrement())
+  invoiceId Int
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  total     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
