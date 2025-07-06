@@ -407,14 +407,32 @@ const updateStatus = async (status) => {
 }
 
 const handleConvert = async () => {
-  loading.value = true
   try {
-    const invoice = await quoteStore.convertToInvoice(quote.value.id)
-    router.push(`/invoices/${invoice.id}`)
+    loading.value = true;
+    const invoice = await quoteStore.convertToInvoice(quote.value.id);
+    
+    // Show success message
+    $notify({
+      type: 'success',
+      title: 'Succès',
+      text: `Le devis a été converti en facture ${invoice.number}`
+    });
+
+    // Redirect to invoice detail page
+    router.push(`/invoices/${invoice.id}`);
   } catch (error) {
-    console.error('Erreur lors de la conversion en facture:', error)
+    // Show error message with specific error if available
+    const errorMessage = error.response?.data?.message || 'Une erreur est survenue lors de la conversion du devis';
+    $notify({
+      type: 'error',
+      title: 'Erreur',
+      text: errorMessage
+    });
+    
+    // Log error for debugging
+    console.error('Error converting quote:', error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 

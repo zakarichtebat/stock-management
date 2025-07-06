@@ -96,13 +96,34 @@ export const useQuoteStore = defineStore('quotes', {
       this.error = null;
       try {
         const response = await convertQuoteToInvoice(id);
+        
+        // Update quote in store with new status
         const index = this.quotes.findIndex(q => q.id === id);
         if (index !== -1) {
           this.quotes[index] = response.data.quote;
         }
+        
+        // Update current quote if we're viewing it
+        if (this.currentQuote?.id === id) {
+          this.currentQuote = response.data.quote;
+        }
+        
         return response.data.invoice;
       } catch (error) {
         this.error = error.response?.data?.message || 'Erreur lors de la conversion en facture';
+        
+        // Add more specific error handling
+        if (error.response?.status === 400) {
+          // Handle validation errors
+          throw new Error(this.error);
+        } else if (error.response?.status === 404) {
+          // Handle not found errors
+          throw new Error('Devis non trouvé');
+        } else if (error.response?.status === 500) {
+          // Handle server errors
+          throw new Error('Erreur serveur lors de la conversion du devis');
+        }
+        
         throw error;
       } finally {
         this.loading = false;

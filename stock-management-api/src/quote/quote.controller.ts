@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, HttpException, HttpStatus } from '@nestjs/common';
 import { QuoteService } from './quote.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { QuoteStatus } from './quote.service';
@@ -23,15 +23,30 @@ export class QuoteController {
   }
 
   @Put(':id/status')
-  updateStatus(
+  async updateStatus(
     @Param('id') id: string,
     @Body('status') status: keyof typeof QuoteStatus,
   ) {
-    return this.quoteService.updateStatus(+id, QuoteStatus[status]);
+    try {
+      return await this.quoteService.updateStatus(+id, QuoteStatus[status]);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to update quote status',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Post(':id/convert')
-  convertToInvoice(@Param('id') id: string) {
-    return this.quoteService.convertToInvoice(+id);
+  async convertToInvoice(@Param('id') id: string) {
+    try {
+      const result = await this.quoteService.convertToInvoice(+id);
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to convert quote to invoice',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 } 
