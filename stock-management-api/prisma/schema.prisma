@@ -30,9 +30,19 @@ enum UserRole {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  name      String
-  quantity  Int
-  price     Float
-  createdAt DateTime @default(now())
+  id             Int       @id @default(autoincrement())
+  name           String
+  quantity       Int
+  entryDate      DateTime  @default(now())
+  expirationDate DateTime?
+  purchasePrice  Float
+  salePrice      Float
+  description    String?
+  category       String?
+  supplier       String?
+  barcode        String?   @unique
+  minStock       Int?      @default(5)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
