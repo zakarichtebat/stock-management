@@ -136,5 +136,5 @@ export const userService = {
     return await api.delete(`/users/${id}`);
   }
 };
-
 export default api;
+

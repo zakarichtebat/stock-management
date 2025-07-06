@@ -227,10 +227,11 @@
         </div>
 
         <!-- Vue liste -->
-        <div v-else class="products-table">
+        <div v-else class="products-list">
           <table class="table">
             <thead>
               <tr>
+                <th>Image</th>
                 <th>Nom</th>
                 <th>Catégorie</th>
                 <th>Stock</th>
@@ -242,17 +243,19 @@
             </thead>
             <tbody>
               <tr v-for="product in displayedProducts" :key="product.id">
+                <td class="product-list-image">
+                  <img 
+                    :src="product.imageUrl || defaultProductImage" 
+                    :alt="product.name"
+                    class="list-img"
+                  />
+                </td>
                 <td>
-                  <strong>{{ product.name }}</strong>
-                  <br>
-                  <small>{{ product.supplier }}</small>
+                  <div class="product-name">{{ product.name }}</div>
+                  <div class="product-supplier text-muted">{{ product.supplier }}</div>
                 </td>
                 <td>{{ product.category }}</td>
-                <td>
-                  <span :class="{ 'low-stock': product.quantity <= 5 }">
-                    {{ product.quantity }}
-                  </span>
-                </td>
+                <td>{{ product.quantity }}</td>
                 <td>{{ product.salePrice }}€</td>
                 <td>
                   <span 
@@ -262,31 +265,26 @@
                     {{ product.isActive ? 'Actif' : 'Inactif' }}
                   </span>
                 </td>
-                <td>
-                  <span 
-                    v-if="product.expirationDate"
-                    :class="{ 'expiring': isExpiringSoon(product.expirationDate) }"
-                  >
-                    {{ formatDate(product.expirationDate) }}
-                  </span>
-                  <span v-else>-</span>
-                </td>
-                <td class="actions-cell">
+                <td>{{ formatDate(product.expirationDate) }}</td>
+                <td class="actions">
                   <router-link 
-                    :to="`/products/${product.id}`" 
-                    class="btn btn-primary btn-sm"
+                    :to="'/products/' + product.id" 
+                    class="btn btn-info btn-sm"
+                    title="Voir les détails"
                   >
                     👁️
                   </router-link>
                   <router-link 
-                    :to="`/products/${product.id}/edit`" 
-                    class="btn btn-secondary btn-sm"
+                    :to="'/products/' + product.id + '/edit'" 
+                    class="btn btn-warning btn-sm"
+                    title="Modifier"
                   >
                     ✏️
                   </router-link>
                   <button 
-                    @click="deleteProduct(product.id)" 
+                    @click="deleteProduct(product.id)"
                     class="btn btn-danger btn-sm"
+                    title="Supprimer"
                   >
                     🗑️
                   </button>
@@ -657,7 +655,7 @@ export default {
   font-size: 0.875rem;
 }
 
-.products-table {
+.products-list {
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -671,45 +669,74 @@ export default {
 
 .table th,
 .table td {
-  padding: 1rem;
+  padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
 }
 
 .table th {
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   font-weight: 600;
   color: #2c3e50;
 }
 
+.table tr:last-child td {
+  border-bottom: none;
+}
+
 .table tr:hover {
-  background-color: #f8f9fa;
+  background: #f8f9fa;
+}
+
+.product-list-image {
+  width: 60px;
+  padding: 4px !important;
+}
+
+.list-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.product-name {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.product-supplier {
+  font-size: 0.85em;
+  color: #666;
+}
+
+.text-muted {
+  color: #6c757d;
 }
 
 .status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 500;
 }
 
 .status-badge.active {
-  background-color: #d4edda;
+  background: #d4edda;
   color: #155724;
 }
 
 .status-badge.inactive {
-  background-color: #f8d7da;
+  background: #f8d7da;
   color: #721c24;
 }
 
-.actions-cell {
-  white-space: nowrap;
-}
-
-.actions-cell .btn {
-  margin-right: 0.5rem;
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .empty-state {

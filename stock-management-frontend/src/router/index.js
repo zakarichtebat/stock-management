@@ -1,98 +1,97 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
+import ProductsView from '../views/ProductsView.vue'
+import ProductCreateView from '../views/ProductCreateView.vue'
+import ProductDetailView from '../views/ProductDetailView.vue'
+import ProductEditView from '../views/ProductEditView.vue'
+import DashboardView from '../views/DashboardView.vue'
+import AlertsView from '../views/AlertsView.vue'
+import StatsView from '../views/StatsView.vue'
+import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth'
 
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: () => import('../views/HomeView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/login',
-    name: 'login',
-    component: () => import('../views/LoginView.vue'),
-    meta: { requiresAuth: false }
-  },
-  {
-    path: '/register',
-    name: 'register',
-    component: () => import('../views/RegisterView.vue'),
-    meta: { requiresAuth: false }
-  },
-  {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: () => import('../views/DashboardView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/products',
-    name: 'products',
-    component: () => import('../views/ProductsView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/products/new',
-    name: 'product-create',
-    component: () => import('../views/ProductCreateView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/products/:id',
-    name: 'product-detail',
-    component: () => import('../views/ProductDetailView.vue'),
-    meta: { requiresAuth: true },
-    props: true
-  },
-  {
-    path: '/products/:id/edit',
-    name: 'product-edit',
-    component: () => import('../views/ProductEditView.vue'),
-    meta: { requiresAuth: true },
-    props: true
-  },
-  {
-    path: '/alerts',
-    name: 'alerts',
-    component: () => import('../views/AlertsView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/stats',
-    name: 'stats',
-    component: () => import('../views/StatsView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: () => import('../views/NotFoundView.vue')
-  }
-]
-
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegisterView
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products',
+      name: 'products',
+      component: ProductsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/new',
+      name: 'product-create',
+      component: ProductCreateView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/:id',
+      name: 'product-detail',
+      component: ProductDetailView,
+      meta: { requiresAuth: true },
+      props: true
+    },
+    {
+      path: '/products/:id/edit',
+      name: 'product-edit',
+      component: ProductEditView,
+      meta: { requiresAuth: true },
+      props: true
+    },
+    {
+      path: '/alerts',
+      name: 'alerts',
+      component: AlertsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stats',
+      name: 'stats',
+      component: StatsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView
+    }
+  ]
 })
 
-// Navigation guard pour l'authentification
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
-  // Vérifier si la route nécessite une authentification
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
-    return
-  }
-  
-  // Rediriger vers le dashboard si déjà connecté et tentative d'accès à login/register
-  if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
+  } else if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
     next('/dashboard')
-    return
+  } else {
+    next()
   }
-  
-  next()
 })
 
 export default router 

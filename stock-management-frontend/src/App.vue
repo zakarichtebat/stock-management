@@ -20,6 +20,7 @@
           </router-link>
           <router-link to="/alerts" class="nav-link">
             🚨 Alertes
+            <span v-if="expiringCount > 0" class="alert-badge">{{ expiringCount }}</span>
           </router-link>
           <router-link to="/stats" class="nav-link">
             📈 Statistiques
@@ -49,9 +50,10 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
+import { useProductStore } from './stores/products'
 
 export default {
   name: 'App',
@@ -59,6 +61,8 @@ export default {
     const authStore = useAuthStore()
     const router = useRouter()
     const notification = ref(null)
+    const productStore = useProductStore()
+    const expiringCount = ref(0)
 
     const handleLogout = async () => {
       try {
@@ -76,10 +80,27 @@ export default {
       }, 5000)
     }
 
+    const loadExpiringCount = async () => {
+      try {
+        const products = await productStore.fetchExpiring(40)
+        expiringCount.value = products.length
+      } catch (error) {
+        console.error('Erreur lors du chargement des alertes:', error)
+      }
+    }
+
+    // Charger le compte initial et mettre à jour toutes les 5 minutes
     onMounted(() => {
-      // Vérifier le token au chargement
-      if (authStore.token) {
-        authStore.validateToken()
+      if (authStore.isAuthenticated) {
+        loadExpiringCount()
+        setInterval(loadExpiringCount, 5 * 60 * 1000)
+      }
+    })
+
+    // Surveiller l'état d'authentification
+    watch(() => authStore.isAuthenticated, (newValue) => {
+      if (newValue) {
+        loadExpiringCount()
       }
     })
 
@@ -87,7 +108,8 @@ export default {
       authStore,
       handleLogout,
       notification,
-      showNotification
+      showNotification,
+      expiringCount
     }
   }
 }
@@ -366,5 +388,15 @@ export default {
   .main-content {
     padding: 1rem;
   }
+}
+
+.alert-badge {
+  background-color: #e74c3c;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  margin-left: 4px;
+  font-weight: bold;
 }
 </style>
