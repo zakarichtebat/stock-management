@@ -51,12 +51,7 @@
         </p>
       </div>
 
-      <!-- Compte de test -->
-      <div class="test-account">
-        <h3>Compte de test</h3>
-        <p><strong>Email:</strong> admin@stockmanagement.com</p>
-        <p><strong>Mot de passe:</strong> admin123</p>
-      </div>
+     
     </div>
   </div>
 </template>

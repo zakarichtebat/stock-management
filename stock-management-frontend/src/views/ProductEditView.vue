@@ -87,6 +87,27 @@
                   placeholder="Description du produit"
                 ></textarea>
               </div>
+
+              <div class="form-group">
+                <label for="imageUrl">URL de l'image</label>
+                <div class="image-input-container">
+                  <input
+                    v-model="form.imageUrl"
+                    type="url"
+                    id="imageUrl"
+                    class="form-control"
+                    placeholder="https://exemple.com/image.jpg"
+                  />
+                  <div class="image-preview">
+                    <img 
+                      :src="form.imageUrl || defaultProductImage" 
+                      :alt="form.name || 'Aperçu du produit'"
+                      class="preview-img"
+                    />
+                  </div>
+                </div>
+                <small class="form-text text-muted">Entrez l'URL d'une image pour ce produit ou laissez vide pour utiliser l'image par défaut</small>
+              </div>
             </div>
 
             <!-- Prix et coûts -->
@@ -271,6 +292,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useProductStore } from '../stores/products'
+import defaultProductImage from '../images/pexels-melovick24-10141956.jpg'
 
 export default {
   name: 'ProductEditView',
@@ -296,7 +318,8 @@ export default {
       location: '',
       entryDate: '',
       expirationDate: '',
-      isActive: true
+      isActive: true,
+      imageUrl: ''
     })
 
     const marginAmount = computed(() => {
@@ -329,7 +352,8 @@ export default {
           location: product.location || '',
           entryDate: product.entryDate ? new Date(product.entryDate).toISOString().split('T')[0] : '',
           expirationDate: product.expirationDate ? new Date(product.expirationDate).toISOString().split('T')[0] : '',
-          isActive: product.isActive !== undefined ? product.isActive : true
+          isActive: product.isActive !== undefined ? product.isActive : true,
+          imageUrl: product.imageUrl || ''
         }
       } catch (err) {
         console.error('Erreur détaillée lors du chargement:', err)
@@ -367,7 +391,8 @@ export default {
           location: form.value.location?.trim() || undefined,
           entryDate: form.value.entryDate ? new Date(form.value.entryDate).toISOString() : undefined,
           expirationDate: form.value.expirationDate ? new Date(form.value.expirationDate).toISOString() : undefined,
-          isActive: form.value.isActive
+          isActive: form.value.isActive,
+          imageUrl: form.value.imageUrl?.trim() || undefined
         }
 
         // Validation basique
@@ -436,7 +461,8 @@ export default {
       marginAmount,
       marginPercentage,
       loadProduct,
-      updateProduct
+      updateProduct,
+      defaultProductImage,
     }
   }
 }
@@ -744,5 +770,25 @@ export default {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.image-input-container {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.image-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style> 

@@ -43,6 +43,7 @@ model Product {
   barcode        String?   @unique
   minStock       Int?      @default(5)
   isActive       Boolean   @default(true)
+  imageUrl       String?   @db.Text
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }

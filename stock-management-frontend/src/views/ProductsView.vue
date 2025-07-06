@@ -140,6 +140,13 @@
             :key="product.id" 
             class="product-card"
           >
+            <div class="product-image">
+              <img 
+                :src="product.imageUrl || defaultProductImage" 
+                :alt="product.name"
+                class="product-img"
+              />
+            </div>
             <div class="product-header">
               <h3>{{ product.name }}</h3>
               <span 
@@ -296,6 +303,7 @@
 <script>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useProductStore } from '../stores/products'
+import defaultProductImage from '../images/pexels-melovick24-10141956.jpg'
 
 export default {
   name: 'ProductsView',
@@ -428,7 +436,8 @@ export default {
       quickUpdateStock,
       deleteProduct,
       formatDate,
-      isExpiringSoon
+      isExpiringSoon,
+      defaultProductImage,
     }
   }
 }
@@ -512,6 +521,17 @@ export default {
 
 .product-card:hover {
   transform: translateY(-2px);
+}
+
+.product-image {
+  margin-bottom: 1rem;
+}
+
+.product-image img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .product-header {
