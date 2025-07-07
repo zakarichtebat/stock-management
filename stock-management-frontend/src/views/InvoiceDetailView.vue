@@ -14,12 +14,7 @@
         >
           <i class="fas fa-download"></i> Télécharger PDF
         </button>
-        <button 
-          class="btn btn-outline-primary"
-          @click="handlePrint"
-        >
-          <i class="fas fa-print"></i> Imprimer
-        </button>
+        
         <router-link to="/invoices" class="btn btn-outline-secondary">
           <i class="fas fa-arrow-left"></i> Retour
         </router-link>
@@ -130,6 +125,15 @@
           </router-link>
         </div>
       </div>
+    </div>
+
+    <!-- Template caché pour l'impression -->
+    <div v-if="invoice" class="d-none">
+      <InvoicePrintTemplate
+        ref="printTemplate"
+        :invoice="invoice"
+        :preview="false"
+      />
     </div>
   </div>
 </template>
@@ -354,20 +358,29 @@ h2 {
     width: 100%;
   }
 }
+
+.d-none {
+  display: none !important;
+}
 </style>
 
 <script>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useInvoiceStore } from '../stores/invoices';
+import InvoicePrintTemplate from '../components/InvoicePrintTemplate.vue';
 
 export default {
   name: 'InvoiceDetailView',
+  components: {
+    InvoicePrintTemplate
+  },
   setup() {
     const route = useRoute();
     const invoiceStore = useInvoiceStore();
     const invoice = ref(null);
     const loading = ref(false);
+    const printTemplate = ref(null);
 
     const loadInvoice = async () => {
       loading.value = true;
@@ -429,16 +442,75 @@ export default {
       }
     };
 
-    const handleDownloadPDF = async () => {
-      try {
-        await invoiceStore.downloadPDF(invoice.value.id);
-      } catch (error) {
-        console.error('Erreur lors du téléchargement du PDF:', error);
+    const handlePrint = () => {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Veuillez autoriser les popups pour l\'impression');
+        return;
       }
+
+      // Écrire le contenu dans la nouvelle fenêtre
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Facture ${invoice.value.number}</title>
+            <style>
+              @page {
+                size: A4;
+                margin: 0;
+              }
+              body {
+                margin: 20mm;
+              }
+              ${document.querySelector('[data-v-' + InvoicePrintTemplate.__scopeId + ']')?.innerHTML || ''}
+            </style>
+          </head>
+          <body>
+            ${printTemplate.value.$el.innerHTML}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      
+      // Attendre que les styles soient chargés
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
     };
 
-    const handlePrint = () => {
-      window.print();
+    const handleDownloadPDF = async () => {
+      try {
+        loading.value = true;
+        const { default: html2pdf } = await import('html2pdf.js');
+        
+        const element = printTemplate.value.$el;
+        
+        const opt = {
+          margin: 20,
+          filename: `facture-${invoice.value.number}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            letterRendering: true
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait'
+          }
+        };
+        
+        await html2pdf().set(opt).from(element).save();
+      } catch (error) {
+        console.error('Erreur lors de la génération du PDF:', error);
+        alert('Erreur lors de la génération du PDF. Veuillez réessayer.');
+      } finally {
+        loading.value = false;
+      }
     };
 
     onMounted(() => {
@@ -448,14 +520,15 @@ export default {
     return {
       invoice,
       loading,
+      printTemplate,
       formatDate,
       formatPrice,
       getStatusClass,
       getStatusLabel,
       getDiscountAmount,
       markAsPaid,
-      handleDownloadPDF,
-      handlePrint
+      handlePrint,
+      handleDownloadPDF
     };
   }
 }
