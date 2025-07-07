@@ -21,18 +21,43 @@ export class InvoiceService {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     
-    // Get count of invoices for this month
-    const count = await this.prisma.invoice.count({
+    // Get the latest invoice number for this month
+    const latestInvoice = await this.prisma.invoice.findFirst({
       where: {
         number: {
           startsWith: `F${year}${month}`
         }
+      },
+      orderBy: {
+        number: 'desc'
       }
     });
     
+    let sequence;
+    if (latestInvoice) {
+      // Extract the sequence number from the latest invoice and increment it
+      const currentSequence = parseInt(latestInvoice.number.slice(-3));
+      sequence = String(currentSequence + 1).padStart(3, '0');
+    } else {
+      // If no invoice exists for this month, start with 001
+      sequence = '001';
+    }
+    
     // Generate number in format: F202401001 (F + YYYYMM + 3-digit sequence)
-    const sequence = String(count + 1).padStart(3, '0');
-    return `F${year}${month}${sequence}`;
+    const proposedNumber = `F${year}${month}${sequence}`;
+    
+    // Verify the number is unique
+    const existingInvoice = await this.prisma.invoice.findUnique({
+      where: { number: proposedNumber }
+    });
+    
+    if (existingInvoice) {
+      // If number exists, recursively try the next number
+      const nextSequence = String(parseInt(sequence) + 1).padStart(3, '0');
+      return this.generateInvoiceNumber();
+    }
+    
+    return proposedNumber;
   }
 
   private calculateTotals(items: any[], discount: number = 0, taxRate: number = 20) {

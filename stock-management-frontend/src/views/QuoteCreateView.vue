@@ -1,181 +1,280 @@
 <template>
-  <div class="quote-create">
-    <h1>Nouveau devis</h1>
-
-    <form @submit.prevent="handleSubmit" class="quote-form">
-      <div class="card mb-4">
-        <div class="card-header">
-          <h3>Informations client</h3>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Nom du client *</label>
-              <input
-                v-model="quote.clientName"
-                type="text"
-                class="form-control"
-                required
-              >
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Email</label>
-              <input
-                v-model="quote.clientEmail"
-                type="email"
-                class="form-control"
-              >
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Adresse</label>
-            <textarea
-              v-model="quote.clientAddress"
-              class="form-control"
-              rows="3"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h3>Produits</h3>
-          <button type="button" class="btn btn-primary" @click="addItem">
-            <i class="fas fa-plus"></i> Ajouter un produit
-          </button>
-        </div>
-        <div class="card-body">
-          <div v-for="(item, index) in quote.items" :key="index" class="item-row mb-3">
-            <div class="row align-items-end">
-              <div class="col-md-4">
-                <label class="form-label">Produit *</label>
-                <select
-                  v-model="item.productId"
-                  class="form-select"
-                  required
-                  @change="updateItemPrice(index)"
-                >
-                  <option value="">Sélectionner un produit</option>
-                  <option
-                    v-for="product in products"
-                    :key="product.id"
-                    :value="product.id"
-                  >
-                    {{ product.name }} ({{ product.salePrice }}€)
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Quantité *</label>
-                <input
-                  v-model.number="item.quantity"
-                  type="number"
-                  class="form-control"
-                  min="1"
-                  required
-                  @change="updateItemTotal(index)"
-                >
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Prix unitaire *</label>
-                <input
-                  v-model.number="item.unitPrice"
-                  type="number"
-                  class="form-control"
-                  step="0.01"
-                  required
-                  @change="updateItemTotal(index)"
-                >
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Total</label>
-                <input
-                  :value="item.total"
-                  type="number"
-                  class="form-control"
-                  readonly
-                >
-              </div>
-              <div class="col-md-2">
-                <button
-                  type="button"
-                  class="btn btn-danger w-100"
-                  @click="removeItem(index)"
-                >
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-header">
-          <h3>Totaux</h3>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <label class="form-label">Taux de TVA (%)</label>
-              <input
-                v-model.number="quote.taxRate"
-                type="number"
-                class="form-control"
-                step="0.1"
-                @change="updateTotals"
-              >
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Remise (%)</label>
-              <input
-                v-model.number="quote.discount"
-                type="number"
-                class="form-control"
-                step="0.1"
-                @change="updateTotals"
-              >
-            </div>
-          </div>
-          <div class="totals mt-4">
-            <div class="row">
-              <div class="col-md-8 text-end">Sous-total :</div>
-              <div class="col-md-4">{{ quote.subtotal.toFixed(2) }} €</div>
-            </div>
-            <div class="row" v-if="quote.discount > 0">
-              <div class="col-md-8 text-end">Remise ({{ quote.discount }}%) :</div>
-              <div class="col-md-4">-{{ getDiscountAmount().toFixed(2) }} €</div>
-            </div>
-            <div class="row">
-              <div class="col-md-8 text-end">TVA ({{ quote.taxRate }}%) :</div>
-              <div class="col-md-4">{{ quote.taxAmount.toFixed(2) }} €</div>
-            </div>
-            <div class="row fw-bold">
-              <div class="col-md-8 text-end">Total TTC :</div>
-              <div class="col-md-4">{{ quote.total.toFixed(2) }} €</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button type="submit" class="btn btn-primary" :disabled="loading">
-          <i class="fas fa-save"></i> Enregistrer
+  <div class="quote-create container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-file-invoice me-2"></i>Nouveau devis
+      </h1>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" @click="previewQuote" :disabled="!isFormValid">
+          <i class="fas fa-eye me-1"></i> Aperçu
         </button>
-        <router-link to="/quotes" class="btn btn-secondary">
-          <i class="fas fa-times"></i> Annuler
+        <router-link to="/quotes" class="btn btn-outline-secondary">
+          <i class="fas fa-times me-1"></i> Annuler
         </router-link>
       </div>
+    </div>
+
+    <form @submit.prevent="handleSubmit" class="quote-form">
+      <!-- Section Client -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h3 class="h5 mb-0 text-primary">
+            <i class="fas fa-user me-2"></i>Informations client
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nom du client <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-user-circle"></i>
+                </span>
+                <input
+                  v-model="quote.clientName"
+                  type="text"
+                  class="form-control"
+                  required
+                  placeholder="Entrez le nom du client"
+                >
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-envelope"></i>
+                </span>
+                <input
+                  v-model="quote.clientEmail"
+                  type="email"
+                  class="form-control"
+                  placeholder="email@exemple.com"
+                >
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Adresse</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-map-marker-alt"></i>
+                </span>
+                <textarea
+                  v-model="quote.clientAddress"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Adresse complète du client"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Produits -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h3 class="h5 mb-0 text-primary">
+            <i class="fas fa-shopping-cart me-2"></i>Produits
+          </h3>
+          <button type="button" class="btn btn-primary btn-sm" @click="addItem">
+            <i class="fas fa-plus me-1"></i> Ajouter un produit
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Produit</th>
+                  <th style="width: 150px">Quantité</th>
+                  <th style="width: 150px">Prix unitaire</th>
+                  <th style="width: 150px">Total</th>
+                  <th style="width: 80px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in quote.items" :key="index">
+                  <td>
+                    <select
+                      v-model="item.productId"
+                      class="form-select"
+                      required
+                      @change="updateItemPrice(index)"
+                    >
+                      <option value="">Sélectionner un produit</option>
+                      <option
+                        v-for="product in products"
+                        :key="product.id"
+                        :value="product.id"
+                      >
+                        {{ product.name }} ({{ formatPrice(product.salePrice) }})
+                      </option>
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      v-model.number="item.quantity"
+                      type="number"
+                      class="form-control"
+                      min="1"
+                      required
+                      @change="updateItemTotal(index)"
+                    >
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input
+                        v-model.number="item.unitPrice"
+                        type="number"
+                        class="form-control"
+                        step="0.01"
+                        required
+                        @change="updateItemTotal(index)"
+                      >
+                      <span class="input-group-text">€</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input
+                        :value="formatPrice(item.total)"
+                        type="text"
+                        class="form-control"
+                        readonly
+                      >
+                      <span class="input-group-text">€</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger btn-sm"
+                      @click="removeItem(index)"
+                      title="Supprimer"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="quote.items.length === 0">
+                  <td colspan="5" class="text-center py-4 text-muted">
+                    <i class="fas fa-box fa-2x mb-2"></i>
+                    <p class="mb-0">Aucun produit ajouté</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Totaux -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+              <h3 class="h5 mb-0 text-primary">
+                <i class="fas fa-cog me-2"></i>Paramètres
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Taux de TVA (%)</label>
+                  <div class="input-group">
+                    <input
+                      v-model.number="quote.taxRate"
+                      type="number"
+                      class="form-control"
+                      step="0.1"
+                      @change="updateTotals"
+                    >
+                    <span class="input-group-text">%</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Remise (%)</label>
+                  <div class="input-group">
+                    <input
+                      v-model.number="quote.discount"
+                      type="number"
+                      class="form-control"
+                      step="0.1"
+                      @change="updateTotals"
+                    >
+                    <span class="input-group-text">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+              <h3 class="h5 mb-0 text-primary">
+                <i class="fas fa-calculator me-2"></i>Totaux
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="totals">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Sous-total :</span>
+                  <span>{{ formatPrice(quote.subtotal) }} €</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" v-if="quote.discount > 0">
+                  <span>Remise ({{ quote.discount }}%) :</span>
+                  <span class="text-danger">-{{ formatPrice(getDiscountAmount()) }} €</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>TVA ({{ quote.taxRate }}%) :</span>
+                  <span>{{ formatPrice(quote.taxAmount) }} €</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="h5 mb-0">Total TTC :</span>
+                  <span class="h4 mb-0 text-primary">{{ formatPrice(quote.total) }} €</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="submit" class="btn btn-primary" :disabled="loading || !isFormValid">
+          <i class="fas fa-save me-1"></i> 
+          <span v-if="loading">Enregistrement...</span>
+          <span v-else>Enregistrer</span>
+        </button>
+      </div>
     </form>
+
+    <!-- Modal Aperçu -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Aperçu du devis</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Contenu de l'aperçu -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useQuoteStore } from '../stores/quotes';
 import { useProductStore } from '../stores/products';
 import { useRouter } from 'vue-router';
+import { Modal } from 'bootstrap/dist/js/bootstrap.bundle';
 
 export default {
   name: 'QuoteCreateView',
@@ -185,6 +284,7 @@ export default {
     const router = useRouter();
     const loading = ref(false);
     const products = ref([]);
+    let previewModal = null;
 
     const quote = ref({
       clientName: '',
@@ -197,6 +297,23 @@ export default {
       taxAmount: 0,
       total: 0
     });
+
+    const isFormValid = computed(() => {
+      return quote.value.clientName && 
+             quote.value.items.length > 0 &&
+             quote.value.items.every(item => 
+               item.productId && 
+               item.quantity > 0 && 
+               item.unitPrice > 0
+             );
+    });
+
+    const formatPrice = (value) => {
+      return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    };
 
     const loadProducts = async () => {
       try {
@@ -240,33 +357,28 @@ export default {
     };
 
     const updateTotals = () => {
-      // Calculate subtotal
       quote.value.subtotal = quote.value.items.reduce((sum, item) => sum + item.total, 0);
-
-      // Calculate discount
       const discountAmount = getDiscountAmount();
       const taxableAmount = quote.value.subtotal - discountAmount;
-
-      // Calculate tax
       quote.value.taxAmount = (taxableAmount * quote.value.taxRate) / 100;
-
-      // Calculate total
       quote.value.total = taxableAmount + quote.value.taxAmount;
     };
 
-    const handleSubmit = async () => {
-      if (quote.value.items.length === 0) {
-        alert('Veuillez ajouter au moins un produit au devis.');
-        return;
+    const previewQuote = () => {
+      if (previewModal) {
+        previewModal.show();
       }
+    };
 
+    const handleSubmit = async () => {
+      if (!isFormValid.value) return;
+      
       loading.value = true;
       try {
         await quoteStore.createQuote(quote.value);
         router.push('/quotes');
       } catch (error) {
         console.error('Erreur lors de la création du devis:', error);
-        alert('Une erreur est survenue lors de la création du devis.');
       } finally {
         loading.value = false;
       }
@@ -274,19 +386,22 @@ export default {
 
     onMounted(() => {
       loadProducts();
-      addItem(); // Add first empty item by default
+      previewModal = new Modal(document.getElementById('previewModal'));
     });
 
     return {
       quote,
       products,
       loading,
+      isFormValid,
+      formatPrice,
       addItem,
       removeItem,
       updateItemPrice,
       updateItemTotal,
-      updateTotals,
       getDiscountAmount,
+      updateTotals,
+      previewQuote,
       handleSubmit
     };
   }
@@ -295,53 +410,60 @@ export default {
 
 <style scoped>
 .quote-create {
-  padding: 20px;
-}
-
-.quote-form {
-  max-width: 1200px;
-  margin: 0 auto;
+  background-color: #f8f9fc;
 }
 
 .card {
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 0.5rem;
 }
 
 .card-header {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  vertical-align: middle;
+  padding: 1rem;
+}
+
+.input-group-text {
   background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  border-color: #dee2e6;
 }
 
-.card-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
+.form-control:focus,
+.form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
 }
 
-.item-row {
-  padding: 15px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
+.text-primary {
+  color: #4e73df !important;
 }
 
-.totals .row {
-  margin-bottom: 8px;
+.btn-primary {
+  background-color: #4e73df;
+  border-color: #4e73df;
 }
 
-.actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2653d4;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.totals {
+  font-size: 1rem;
 }
 
-.form-label {
-  font-weight: 500;
+.h4 {
+  font-weight: 600;
 }
 </style> 

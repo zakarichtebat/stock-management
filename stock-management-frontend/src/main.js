@@ -2,6 +2,11 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
+import '@fortawesome/fontawesome-free/css/all.css';
+
+// Bootstrap
+
+import 'bootstrap';
 
 // Styles
 import './assets/styles/main.css';
@@ -55,7 +60,12 @@ import {
   faSyncAlt,
   faFile,
   faFilePdf,
-  faDownload
+  faDownload,
+  faCalendar,
+  faCalculator,
+  faSave,
+  faSpinner,
+  faArrowLeft
 } from '@fortawesome/free-solid-svg-icons';
 
 // Ajout des icônes à la bibliothèque
@@ -105,7 +115,12 @@ library.add(
   faSyncAlt,
   faFile,
   faFilePdf,
-  faDownload
+  faDownload,
+  faCalendar,
+  faCalculator,
+  faSave,
+  faSpinner,
+  faArrowLeft
 );
 
 const app = createApp(App);

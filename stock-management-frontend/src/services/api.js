@@ -16,6 +16,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Ne pas définir Content-Type pour les requêtes multipart/form-data
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {
@@ -26,7 +32,21 @@ api.interceptors.request.use(
 // Products API
 export const getProducts = () => api.get('/products');
 export const getProduct = (id) => api.get(`/products/${id}`);
-export const createProduct = (data) => api.post('/products', data);
+export const createProduct = (data) => {
+  // Si data est déjà un FormData, l'utiliser directement
+  const formData = data instanceof FormData ? data : new FormData();
+  
+  // Si data n'est pas un FormData, convertir les données en FormData
+  if (!(data instanceof FormData)) {
+    Object.keys(data).forEach(key => {
+      if (data[key] !== null && data[key] !== undefined) {
+        formData.append(key, data[key]);
+      }
+    });
+  }
+  
+  return api.post('/products', formData);
+};
 export const updateProduct = (id, data) => api.patch(`/products/${id}`, data);
 export const deleteProduct = (id) => api.delete(`/products/${id}`);
 export const searchProducts = (query) => api.get(`/products/search?q=${query}`);
