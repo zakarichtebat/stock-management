@@ -175,6 +175,30 @@
                 </small>
               </div>
             </div>
+
+            <!-- Image du produit -->
+            <div class="form-section">
+              <h2>📸 Image du produit</h2>
+              <div class="form-group">
+                <label for="image" class="form-label">Image</label>
+                <input
+                  id="image"
+                  type="file"
+                  class="form-input"
+                  @change="handleImageChange"
+                  accept="image/*"
+                />
+                <small class="form-help">
+                  Formats acceptés: JPG, PNG, GIF (max 5MB)
+                </small>
+              </div>
+              <div v-if="imagePreview" class="image-preview">
+                <img :src="imagePreview" alt="Aperçu du produit" />
+                <button type="button" class="btn btn-danger" @click="removeImage">
+                  Supprimer l'image
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Erreurs -->
@@ -259,91 +283,108 @@
 </template>
 
 <script>
-import { reactive, computed, onMounted } from 'vue'
-import { useProductStore } from '../stores/products'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useProductStore } from '../stores/products'
 
 export default {
   name: 'ProductCreateView',
   setup() {
-    const productStore = useProductStore()
     const router = useRouter()
+    const productStore = useProductStore()
 
-    const form = reactive({
+    const form = ref({
       name: '',
       category: '',
       supplier: '',
       barcode: '',
       description: '',
-      purchasePrice: '',
-      salePrice: '',
-      quantity: '',
+      purchasePrice: 0,
+      salePrice: 0,
+      quantity: 0,
       minStock: '',
       entryDate: new Date().toISOString().split('T')[0],
       expirationDate: '',
-      isActive: true
+      isActive: true,
+      image: null
     })
 
+    const imagePreview = ref(null)
+
     const isFormValid = computed(() => {
-      return form.name && 
-             form.purchasePrice && 
-             form.salePrice && 
-             form.quantity !== ''
+      return form.value.name &&
+        parseFloat(form.value.purchasePrice) >= 0 &&
+        parseFloat(form.value.salePrice) >= 0 &&
+        parseInt(form.value.quantity) >= 0
     })
 
     const margin = computed(() => {
-      const purchase = parseFloat(form.purchasePrice) || 0
-      const sale = parseFloat(form.salePrice) || 0
+      const purchase = parseFloat(form.value.purchasePrice) || 0
+      const sale = parseFloat(form.value.salePrice) || 0
       return (sale - purchase).toFixed(2)
     })
 
     const marginPercent = computed(() => {
-      const purchase = parseFloat(form.purchasePrice) || 0
-      const sale = parseFloat(form.salePrice) || 0
-      
-      if (purchase === 0) return '0'
-      
-      const percent = ((sale - purchase) / purchase) * 100
-      return percent.toFixed(1)
+      const purchase = parseFloat(form.value.purchasePrice) || 0
+      const sale = parseFloat(form.value.salePrice) || 0
+      if (purchase === 0) return '0.0'
+      return (((sale - purchase) / purchase) * 100).toFixed(1)
     })
 
-    const formatDate = (dateString) => {
-      if (!dateString) return null
-      const date = new Date(dateString)
-      return date.toLocaleDateString('fr-FR')
+    const formatDate = (date) => {
+      if (!date) return ''
+      return new Date(date).toLocaleDateString('fr-FR')
+    }
+
+    const handleImageChange = (event) => {
+      const file = event.target.files[0]
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert('L\'image ne doit pas dépasser 5MB')
+          event.target.value = ''
+          return
+        }
+        form.value.image = file
+        imagePreview.value = URL.createObjectURL(file)
+      }
+    }
+
+    const removeImage = () => {
+      form.value.image = null
+      imagePreview.value = null
+      const fileInput = document.getElementById('image')
+      if (fileInput) fileInput.value = ''
     }
 
     const createProduct = async () => {
       if (!isFormValid.value) return
 
       try {
-        // Préparer les données
-        const productData = {
-          name: form.name,
-          category: form.category || null,
-          supplier: form.supplier || null,
-          barcode: form.barcode || null,
-          description: form.description || null,
-          purchasePrice: parseFloat(form.purchasePrice),
-          salePrice: parseFloat(form.salePrice),
-          quantity: parseInt(form.quantity),
-          minStock: form.minStock ? parseInt(form.minStock) : null,
-          entryDate: form.entryDate,
-          expirationDate: form.expirationDate || null,
-          isActive: form.isActive
-        }
+        const formData = new FormData()
+        
+        // Convertir et ajouter les champs avec les bons types
+        formData.append('name', form.value.name)
+        formData.append('quantity', parseInt(form.value.quantity) || 0)
+        formData.append('purchasePrice', parseFloat(form.value.purchasePrice) || 0)
+        formData.append('salePrice', parseFloat(form.value.salePrice) || 0)
+        formData.append('isActive', form.value.isActive ? 'true' : 'false')
 
-        await productStore.createProduct(productData)
+        // Ajouter les champs optionnels seulement s'ils ont une valeur
+        if (form.value.category) formData.append('category', form.value.category)
+        if (form.value.supplier) formData.append('supplier', form.value.supplier)
+        if (form.value.barcode) formData.append('barcode', form.value.barcode)
+        if (form.value.description) formData.append('description', form.value.description)
+        if (form.value.minStock) formData.append('minStock', parseInt(form.value.minStock))
+        if (form.value.entryDate) formData.append('entryDate', form.value.entryDate)
+        if (form.value.expirationDate) formData.append('expirationDate', form.value.expirationDate)
+        if (form.value.image) formData.append('image', form.value.image)
+
+        await productStore.createProduct(formData)
         router.push('/products')
       } catch (error) {
-        console.error('Erreur lors de la création:', error)
+        console.error('Erreur lors de la création du produit:', error)
       }
     }
-
-    onMounted(() => {
-      // Nettoyer les erreurs précédentes
-      productStore.clearError()
-    })
 
     return {
       form,
@@ -352,6 +393,9 @@ export default {
       margin,
       marginPercent,
       formatDate,
+      imagePreview,
+      handleImageChange,
+      removeImage,
       createProduct
     }
   }
@@ -556,6 +600,37 @@ export default {
 .preview-description p {
   margin: 0.5rem 0;
   color: #2c3e50;
+}
+
+.image-preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 1rem;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+input[type="file"] {
+  padding: 0.5rem;
 }
 
 @media (max-width: 768px) {

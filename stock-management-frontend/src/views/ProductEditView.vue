@@ -89,24 +89,27 @@
               </div>
 
               <div class="form-group">
-                <label for="imageUrl">URL de l'image</label>
+                <label>Image du produit</label>
                 <div class="image-input-container">
-                  <input
-                    v-model="form.imageUrl"
-                    type="url"
-                    id="imageUrl"
-                    class="form-control"
-                    placeholder="https://exemple.com/image.jpg"
-                  />
                   <div class="image-preview">
                     <img 
-                      :src="form.imageUrl || defaultProductImage" 
+                      :src="getProductImage(form)" 
                       :alt="form.name || 'Aperçu du produit'"
                       class="preview-img"
+                      @error="handleImageError"
                     />
                   </div>
+                  <div class="image-upload">
+                    <input
+                      type="file"
+                      @change="handleImageUpload"
+                      accept="image/*"
+                      class="form-control"
+                      ref="fileInput"
+                    />
+                    <small class="form-text text-muted">Formats acceptés : JPG, PNG, GIF</small>
+                  </div>
                 </div>
-                <small class="form-text text-muted">Entrez l'URL d'une image pour ce produit ou laissez vide pour utiliser l'image par défaut</small>
               </div>
             </div>
 
@@ -292,7 +295,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useProductStore } from '../stores/products'
-import defaultProductImage from '../images/pexels-melovick24-10141956.jpg'
+import { getImageUrl, getDefaultProductImage } from '../utils/imageHelper'
 
 export default {
   name: 'ProductEditView',
@@ -300,6 +303,7 @@ export default {
     const router = useRouter()
     const route = useRoute()
     const productStore = useProductStore()
+    const fileInput = ref(null)
     
     const loading = ref(true)
     const error = ref('')
@@ -330,6 +334,73 @@ export default {
       if (!form.value.purchasePrice || form.value.purchasePrice === 0) return 0
       return ((marginAmount.value / form.value.purchasePrice) * 100)
     })
+
+    const getProductImage = (product) => {
+      return getImageUrl(product.imageUrl)
+    }
+
+    const handleImageError = (e) => {
+      e.target.src = getDefaultProductImage();
+    }
+
+    const handleImageUpload = async (event) => {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const formData = new FormData()
+      formData.append('image', file)
+
+      try {
+        // Récupérer le token
+        const token = localStorage.getItem('token')
+        if (!token) {
+          throw new Error('Non autorisé')
+        }
+
+        // Créer l'URL complète
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const response = await fetch(`${baseUrl}/api/products/${route.params.id}/image`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        // Vérifier le type de contenu de la réponse
+        const contentType = response.headers.get('content-type')
+        if (!response.ok) {
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Erreur lors du téléchargement')
+          } else {
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`)
+          }
+        }
+
+        // Vérifier si nous avons une réponse JSON
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json()
+          if (data && data.path) {
+            form.value.imageUrl = data.path
+            // Recharger le produit pour mettre à jour l'image
+            await loadProduct()
+          } else {
+            throw new Error('Format de réponse invalide')
+          }
+        } else {
+          throw new Error('Format de réponse invalide')
+        }
+      } catch (error) {
+        console.error('Erreur de téléchargement:', error)
+        alert(error.message || 'Erreur lors du téléchargement de l\'image. Veuillez réessayer.')
+      } finally {
+        // Réinitialiser le champ de fichier
+        if (fileInput.value) {
+          fileInput.value.value = ''
+        }
+      }
+    }
 
     const loadProduct = async () => {
       try {
@@ -462,7 +533,11 @@ export default {
       marginPercentage,
       loadProduct,
       updateProduct,
-      defaultProductImage,
+      getProductImage,
+      getDefaultProductImage,
+      fileInput,
+      handleImageUpload,
+      handleImageError,
     }
   }
 }
@@ -774,21 +849,37 @@ export default {
 
 .image-input-container {
   display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .image-preview {
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
+  border: 2px dashed #ddd;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
 }
 
 .preview-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.image-upload {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-text {
+  color: #666;
+  font-size: 0.875rem;
 }
 </style> 

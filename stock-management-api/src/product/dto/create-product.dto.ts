@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNumber, IsOptional, IsDateString, IsBoolean, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateProductDto {
   @ApiProperty({ description: 'Nom du produit', example: 'Iphone 15' })
@@ -7,6 +8,7 @@ export class CreateProductDto {
   name: string;
 
   @ApiProperty({ description: 'Quantité en stock', example: 50, minimum: 0 })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   quantity: number;
@@ -22,11 +24,13 @@ export class CreateProductDto {
   expirationDate?: string;
 
   @ApiProperty({ description: 'Prix d\'achat', example: 800.50, minimum: 0 })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   purchasePrice: number;
 
   @ApiProperty({ description: 'Prix de vente', example: 1200.00, minimum: 0 })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   salePrice: number;
@@ -53,12 +57,23 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({ description: 'Stock minimum', example: 5, minimum: 0 })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   minStock?: number;
 
   @ApiPropertyOptional({ description: 'Produit actif', example: true })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'URL de l\'image du produit', example: 'products/image.jpg' })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 } 

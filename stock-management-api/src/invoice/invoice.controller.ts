@@ -4,7 +4,7 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { InvoiceStatus } from './invoice.service';
 import { Response } from 'express';
 
-@Controller('invoices')
+@Controller('api/invoices')
 export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 

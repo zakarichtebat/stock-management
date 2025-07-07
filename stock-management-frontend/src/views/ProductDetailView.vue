@@ -43,6 +43,10 @@
           <!-- Informations générales -->
           <div class="info-section">
             <h2>📝 Informations Générales</h2>
+            <!-- Image du produit -->
+            <div v-if="product.imageUrl" class="product-image">
+              <img :src="getProductImage(product)" :alt="product.name" />
+            </div>
             <div class="info-grid">
               <div class="info-item">
                 <label>Nom du produit</label>
@@ -218,17 +222,25 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useProductStore } from '../stores/products'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { getImageUrl, getDefaultProductImage } from '../utils/imageHelper'
 
 export default {
   name: 'ProductDetailView',
   setup() {
     const productStore = useProductStore()
     const route = useRoute()
+    const router = useRouter()
     const showStockModal = ref(false)
     const newStock = ref('')
 
     const product = computed(() => productStore.currentProduct)
+
+    const getProductImage = (product) => {
+      if (!product.imageUrl) return getDefaultProductImage();
+      const imageUrl = getImageUrl(product.imageUrl);
+      return imageUrl || getDefaultProductImage();
+    }
 
     const margin = computed(() => {
       if (!product.value) return 0
@@ -353,6 +365,8 @@ export default {
       product,
       showStockModal,
       newStock,
+      getProductImage,
+      getDefaultProductImage,
       margin,
       marginPercent,
       totalValue,
@@ -723,6 +737,19 @@ export default {
 .not-found h2 {
   color: #2c3e50;
   margin-bottom: 1rem;
+}
+
+.product-image {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.product-image img {
+  max-width: 300px;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {

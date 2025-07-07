@@ -49,9 +49,10 @@
               >
                 <td class="product-image">
                   <img 
-                    :src="product.imageUrl || defaultProductImage" 
+                    :src="getProductImage(product)" 
                     :alt="product.name"
                     class="product-img"
+                    @error="$event.target.src = getDefaultProductImage()"
                   />
                 </td>
                 <td>
@@ -97,7 +98,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useProductStore } from '../stores/products'
-import defaultProductImage from '../images/pexels-melovick24-10141956.jpg'
+import { getImageUrl, getDefaultProductImage } from '../utils/imageHelper'
 
 export default {
   name: 'AlertsView',
@@ -154,6 +155,12 @@ export default {
       expiringCount.value--
     }
 
+    const getProductImage = (product) => {
+      if (!product.imageUrl) return getDefaultProductImage();
+      const imageUrl = getImageUrl(product.imageUrl);
+      return imageUrl || getDefaultProductImage();
+    }
+
     onMounted(loadAlerts)
 
     return {
@@ -165,7 +172,8 @@ export default {
       getDaysLeft,
       getExpirationClass,
       markAsHandled,
-      defaultProductImage
+      getProductImage,
+      getDefaultProductImage
     }
   }
 }

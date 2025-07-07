@@ -183,7 +183,7 @@
           >
             <div class="product-image">
               <img 
-                :src="product.imageUrl || defaultProductImage" 
+                :src="getProductImage(product)" 
                 :alt="product.name"
                 class="product-img"
                 @error="handleImageError"
@@ -265,7 +265,7 @@
           >
             <div class="list-cell">
               <img 
-                :src="product.imageUrl || defaultProductImage" 
+                :src="getProductImage(product)" 
                 :alt="product.name"
                 class="product-thumbnail"
                 @error="handleImageError"
@@ -366,8 +366,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useProductStore } from '../stores/products'
 import { useRouter } from 'vue-router'
-import defaultProductImage from '../images/pexels-melovick24-10141956.jpg'
+import { getImageUrl, getDefaultProductImage } from '../utils/imageHelper'
 import { debounce } from 'lodash'
+import '@/assets/styles/products.css'
 
 const productStore = useProductStore()
 const router = useRouter()
@@ -386,11 +387,44 @@ const filters = ref({
 })
 
 const displayedProducts = computed(() => {
-  return productStore.filteredProducts || []
+  let filtered = productStore.filteredProducts
+
+  // Apply filters
+  if (filters.value.name) {
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(filters.value.name.toLowerCase())
+    )
+  }
+  if (filters.value.category) {
+    filtered = filtered.filter(p => 
+      p.category?.toLowerCase().includes(filters.value.category.toLowerCase())
+    )
+  }
+  if (filters.value.supplier) {
+    filtered = filtered.filter(p => 
+      p.supplier?.toLowerCase().includes(filters.value.supplier.toLowerCase())
+    )
+  }
+  if (filters.value.minPrice) {
+    filtered = filtered.filter(p => 
+      p.salePrice >= parseFloat(filters.value.minPrice)
+    )
+  }
+  if (filters.value.maxPrice) {
+    filtered = filtered.filter(p => 
+      p.salePrice <= parseFloat(filters.value.maxPrice)
+    )
+  }
+  if (filters.value.isActive !== '') {
+    const isActive = filters.value.isActive === 'true'
+    filtered = filtered.filter(p => p.isActive === isActive)
+  }
+
+  return filtered
 })
 
 const handleImageError = (event) => {
-  event.target.src = defaultProductImage
+  event.target.src = getDefaultProductImage();
 }
 
 const clearFilters = () => {
@@ -483,6 +517,12 @@ const confirmDelete = () => {
 const cancelDelete = () => {
   showDeleteModal.value = false
   productToDelete.value = null
+}
+
+const getProductImage = (product) => {
+  if (!product.imageUrl) return getDefaultProductImage();
+  const imageUrl = getImageUrl(product.imageUrl);
+  return imageUrl || getDefaultProductImage();
 }
 
 onMounted(async () => {
@@ -679,39 +719,39 @@ onMounted(async () => {
 /* Grille de produits */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-4);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
 }
 
 .product-card {
   background: white;
-  border-radius: var(--card-border-radius);
-  box-shadow: var(--box-shadow);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
-  transition: all var(--transition-speed);
   position: relative;
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--box-shadow-lg);
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .product-image {
   position: relative;
-  padding-top: 75%;
-  background: var(--light-color);
+  width: 100%;
+  height: 200px;
   overflow: hidden;
+  background: #f5f5f5;
 }
 
 .product-img {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform var(--transition-speed);
+  object-fit: contain;
+  padding: 10px;
+  transition: transform 0.3s ease;
 }
 
 .product-card:hover .product-img {
@@ -720,50 +760,49 @@ onMounted(async () => {
 
 .product-status {
   position: absolute;
-  top: var(--spacing-3);
-  right: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  background: rgba(var(--gray-rgb), 0.9);
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: white;
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .product-status.active {
-  background: rgba(var(--success-rgb), 0.9);
+  background: rgba(40, 167, 69, 0.8);
 }
 
 .product-content {
-  padding: var(--spacing-4);
+  padding: 15px;
 }
 
 .product-header {
-  margin-bottom: var(--spacing-3);
+  margin-bottom: 10px;
 }
 
 .product-name {
-  font-size: 1.1rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--secondary-color);
-  margin: 0 0 var(--spacing-2);
-  line-height: 1.4;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 5px 0;
 }
 
 .product-category {
+  font-size: 0.9rem;
+  color: #666;
+  background: #f0f0f0;
+  padding: 3px 8px;
+  border-radius: 12px;
   display: inline-block;
-  padding: var(--spacing-1) var(--spacing-2);
-  background: var(--light-color);
-  border-radius: var(--border-radius-sm);
-  color: var(--gray-color);
-  font-size: var(--font-size-sm);
 }
 
 .product-info {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-3);
-  margin-bottom: var(--spacing-3);
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 15px 0;
 }
 
 .info-item {
@@ -772,33 +811,93 @@ onMounted(async () => {
 }
 
 .info-label {
-  font-size: var(--font-size-sm);
-  color: var(--gray-color);
-  margin-bottom: var(--spacing-1);
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 3px;
 }
 
 .info-value {
-  font-weight: var(--font-weight-medium);
-  color: var(--secondary-color);
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .product-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: var(--spacing-3);
-  border-top: 1px solid var(--border-color);
-}
-
-.product-price {
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--primary-color);
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  margin-top: 10px;
 }
 
 .product-actions {
   display: flex;
-  gap: var(--spacing-2);
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-icon.btn-danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-icon.btn-danger:hover {
+  background: #fecaca;
+}
+
+/* Vue liste */
+.products-list {
+  margin-top: 20px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.list-header {
+  display: grid;
+  grid-template-columns: 100px 2fr 1fr 1fr 1fr 120px;
+  padding: 15px;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: 100px 2fr 1fr 1fr 1fr 120px;
+  padding: 15px;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.list-row:hover {
+  background: #f8f9fa;
+}
+
+.product-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f5f5f5;
+  padding: 5px;
 }
 
 /* États */
@@ -828,43 +927,31 @@ onMounted(async () => {
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
-  .products-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 992px) {
-  .filters-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-3);
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }
 
-  .header-actions {
-    width: 100%;
+  .list-header, .list-row {
+    grid-template-columns: 80px 2fr 1fr 1fr 100px;
   }
 
-  .filters-grid {
-    grid-template-columns: 1fr;
+  .supplier-cell {
+    display: none;
   }
+}
 
+@media (max-width: 480px) {
   .products-grid {
     grid-template-columns: 1fr;
   }
 
-  .btn {
-    width: 100%;
+  .list-header, .list-row {
+    grid-template-columns: 60px 2fr 1fr 80px;
+  }
+
+  .category-cell {
+    display: none;
   }
 }
 
