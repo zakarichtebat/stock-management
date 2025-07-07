@@ -1,0 +1,232 @@
+.quote-create {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.quote-header {
+  margin-bottom: 2rem;
+}
+
+.quote-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quote-title i {
+  color: #3498db;
+}
+
+.quote-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.quote-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.quote-card-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
+}
+
+.quote-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3498db;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quote-card-body {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.form-label .required {
+  color: #e74c3c;
+  margin-left: 0.25rem;
+}
+
+.input-group {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.input-group-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #95a5a6;
+  z-index: 2;
+}
+
+.form-control, .form-select {
+  border: 1px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  padding-left: 2.5rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.products-table th {
+  background: #f8f9fa;
+  padding: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.products-table td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.products-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  color: #2c3e50;
+  border: 1px solid #e9ecef;
+}
+
+.btn-secondary:hover {
+  background: #e9ecef;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.totals-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.total-row:last-child {
+  border-bottom: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.empty-products {
+  text-align: center;
+  padding: 3rem 0;
+  color: #95a5a6;
+}
+
+.empty-products i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.preview-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .quote-create {
+    padding: 1rem;
+  }
+  
+  .quote-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .products-table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+} 

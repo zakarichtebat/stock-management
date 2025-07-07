@@ -71,6 +71,7 @@ export class QuoteService {
     return this.prisma.quote.create({
       data: {
         number,
+        date: new Date(),
         ...quoteData,
         subtotal,
         taxAmount,
