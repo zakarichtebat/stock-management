@@ -1,138 +1,360 @@
 <template>
   <div class="invoice-detail">
-    <div class="header d-flex justify-content-between align-items-center mb-4">
-      <h1>Facture {{ invoice?.number }}</h1>
+    <!-- En-tête avec actions -->
+    <div class="invoice-header">
+      <div class="company-info">
+        <h1 class="company-name">StockManager</h1>
+        <div class="invoice-number">Facture #{{ invoice?.number }}</div>
+      </div>
       <div class="actions">
         <button 
-          class="btn btn-primary me-2"
+          class="btn btn-primary"
           @click="handleDownloadPDF"
           :disabled="loading"
         >
           <i class="fas fa-download"></i> Télécharger PDF
         </button>
         <button 
-          class="btn btn-secondary me-2"
+          class="btn btn-outline-primary"
           @click="handlePrint"
         >
           <i class="fas fa-print"></i> Imprimer
         </button>
-        <router-link to="/invoices" class="btn btn-secondary">
+        <router-link to="/invoices" class="btn btn-outline-secondary">
           <i class="fas fa-arrow-left"></i> Retour
         </router-link>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-md-8">
-        <div class="card mb-4">
-          <div class="card-header">
-            <h3>Informations client</h3>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <p><strong>Nom :</strong> {{ invoice?.clientName }}</p>
-                <p v-if="invoice?.clientEmail"><strong>Email :</strong> {{ invoice.clientEmail }}</p>
-              </div>
-              <div class="col-md-6">
-                <p v-if="invoice?.clientAddress"><strong>Adresse :</strong> {{ invoice.clientAddress }}</p>
-                <p><strong>Date :</strong> {{ formatDate(invoice?.date) }}</p>
-                <p><strong>Échéance :</strong> {{ formatDate(invoice?.dueDate) }}</p>
-              </div>
+    <!-- Contenu principal -->
+    <div class="invoice-content">
+      <!-- Section informations -->
+      <div class="info-section">
+        <div class="client-info">
+          <h2>Client</h2>
+          <div class="info-card">
+            <div class="client-name">{{ invoice?.clientName }}</div>
+            <div class="client-details" v-if="invoice?.clientEmail">
+              <i class="fas fa-envelope"></i> {{ invoice.clientEmail }}
+            </div>
+            <div class="client-details" v-if="invoice?.clientAddress">
+              <i class="fas fa-map-marker-alt"></i> {{ invoice.clientAddress }}
             </div>
           </div>
         </div>
 
-        <div class="card mb-4">
-          <div class="card-header">
-            <h3>Produits</h3>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Produit</th>
-                    <th>Quantité</th>
-                    <th>Prix unitaire</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in invoice?.items" :key="item.id">
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.unitPrice.toFixed(2) }} €</td>
-                    <td>{{ item.total.toFixed(2) }} €</td>
-                  </tr>
-                </tbody>
-              </table>
+        <div class="invoice-info">
+          <h2>Détails</h2>
+          <div class="info-card">
+            <div class="info-row">
+              <span class="label">Date d'émission</span>
+              <span class="value">{{ formatDate(invoice?.date) }}</span>
             </div>
-          </div>
-        </div>
-
-        <div class="card mb-4" v-if="invoice?.quote">
-          <div class="card-header">
-            <h3>Devis associé</h3>
-          </div>
-          <div class="card-body">
-            <p><strong>Numéro de devis :</strong> {{ invoice.quote.number }}</p>
-            <p><strong>Date du devis :</strong> {{ formatDate(invoice.quote.date) }}</p>
-            <router-link :to="'/quotes/' + invoice.quote.id" class="btn btn-info">
-              <i class="fas fa-eye"></i> Voir le devis
-            </router-link>
+            <div class="info-row">
+              <span class="label">Date d'échéance</span>
+              <span class="value">{{ formatDate(invoice?.dueDate) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Statut</span>
+              <span :class="['status-badge', getStatusClass(invoice?.status)]">
+                {{ getStatusLabel(invoice?.status) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-md-4">
-        <div class="card mb-4">
-          <div class="card-header">
-            <h3>Statut</h3>
+      <!-- Table des produits -->
+      <div class="products-section">
+        <h2>Produits</h2>
+        <div class="table-container">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th class="text-center">Quantité</th>
+                <th class="text-right">Prix unitaire</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in invoice?.items" :key="item.id">
+                <td>{{ item.product.name }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right">{{ formatPrice(item.unitPrice) }} €</td>
+                <td class="text-right">{{ formatPrice(item.total) }} €</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section totaux -->
+      <div class="totals-section">
+        <div class="totals-card">
+          <div class="total-row">
+            <span>Sous-total</span>
+            <span>{{ formatPrice(invoice?.subtotal) }} €</span>
           </div>
-          <div class="card-body">
-            <span :class="getStatusClass(invoice?.status)">
-              {{ getStatusLabel(invoice?.status) }}
-            </span>
-            <div class="mt-3" v-if="invoice?.status === 'PENDING'">
-              <button 
-                class="btn btn-success w-100"
-                @click="markAsPaid"
-                :disabled="loading"
-              >
-                <i class="fas fa-check"></i> Marquer comme payée
-              </button>
-            </div>
+          <div class="total-row" v-if="invoice?.discount > 0">
+            <span>Remise ({{ invoice.discount }}%)</span>
+            <span class="discount">-{{ formatPrice(getDiscountAmount()) }} €</span>
+          </div>
+          <div class="total-row">
+            <span>TVA ({{ invoice?.taxRate }}%)</span>
+            <span>{{ formatPrice(invoice?.taxAmount) }} €</span>
+          </div>
+          <div class="total-row grand-total">
+            <span>Total TTC</span>
+            <span>{{ formatPrice(invoice?.total) }} €</span>
           </div>
         </div>
+      </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h3>Totaux</h3>
-          </div>
-          <div class="card-body">
-            <div class="d-flex justify-content-between mb-2">
-              <span>Sous-total :</span>
-              <span>{{ invoice?.subtotal.toFixed(2) }} €</span>
+      <!-- Devis associé -->
+      <div class="quote-section" v-if="invoice?.quote">
+        <h2>Devis associé</h2>
+        <div class="quote-card">
+          <div class="quote-info">
+            <div class="info-row">
+              <span class="label">Numéro de devis</span>
+              <span class="value">{{ invoice.quote.number }}</span>
             </div>
-            <div class="d-flex justify-content-between mb-2" v-if="invoice?.discount > 0">
-              <span>Remise ({{ invoice.discount }}%) :</span>
-              <span>-{{ getDiscountAmount().toFixed(2) }} €</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>TVA ({{ invoice?.taxRate }}%) :</span>
-              <span>{{ invoice?.taxAmount.toFixed(2) }} €</span>
-            </div>
-            <div class="d-flex justify-content-between fw-bold">
-              <span>Total TTC :</span>
-              <span>{{ invoice?.total.toFixed(2) }} €</span>
+            <div class="info-row">
+              <span class="label">Date du devis</span>
+              <span class="value">{{ formatDate(invoice.quote.date) }}</span>
             </div>
           </div>
+          <router-link :to="'/quotes/' + invoice.quote.id" class="btn btn-outline-info">
+            <i class="fas fa-eye"></i> Voir le devis
+          </router-link>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.invoice-detail {
+  padding: 2rem;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  border-radius: 8px;
+  color: white;
+}
+
+.company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.company-name {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.invoice-number {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.actions .btn {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+}
+
+.invoice-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.info-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.info-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.client-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.client-details {
+  color: #666;
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #666;
+}
+
+.value {
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.products-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.products-table th {
+  background: #f8f9fa;
+  padding: 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.products-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.totals-section {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.totals-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-width: 300px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.discount {
+  color: #dc3545;
+}
+
+.grand-total {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid #eee;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.quote-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quote-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quote-info {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .invoice-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .actions .btn {
+    flex: 1;
+  }
+
+  .quote-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .quote-info {
+    width: 100%;
+  }
+}
+</style>
 
 <script>
 import { ref, onMounted } from 'vue';
@@ -160,17 +382,25 @@ export default {
 
     const formatDate = (date) => {
       if (!date) return '';
-      return new Date(date).toLocaleDateString();
+      return new Date(date).toLocaleDateString('fr-FR');
+    };
+
+    const formatPrice = (value) => {
+      if (!value) return '0,00';
+      return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
     };
 
     const getStatusClass = (status) => {
       const classes = {
-        'PENDING': 'badge bg-warning',
-        'PAID': 'badge bg-success',
-        'CANCELLED': 'badge bg-danger',
-        'OVERDUE': 'badge bg-danger'
+        'PENDING': 'bg-warning',
+        'PAID': 'bg-success',
+        'CANCELLED': 'bg-danger',
+        'OVERDUE': 'bg-danger'
       };
-      return classes[status] || 'badge bg-secondary';
+      return classes[status] || 'bg-secondary';
     };
 
     const getStatusLabel = (status) => {
@@ -181,6 +411,11 @@ export default {
         'OVERDUE': 'En retard'
       };
       return labels[status] || status;
+    };
+
+    const getDiscountAmount = () => {
+      if (!invoice.value) return 0;
+      return (invoice.value.subtotal * invoice.value.discount) / 100;
     };
 
     const markAsPaid = async () => {
@@ -202,76 +437,26 @@ export default {
       }
     };
 
-    const getDiscountAmount = () => {
-      if (!invoice.value) return 0;
-      return (invoice.value.subtotal * invoice.value.discount) / 100;
-    };
-
     const handlePrint = () => {
       window.print();
     };
 
-    onMounted(loadInvoice);
+    onMounted(() => {
+      loadInvoice();
+    });
 
     return {
       invoice,
       loading,
       formatDate,
+      formatPrice,
       getStatusClass,
       getStatusLabel,
+      getDiscountAmount,
       markAsPaid,
       handleDownloadPDF,
-      getDiscountAmount,
       handlePrint
     };
   }
-};
-</script>
-
-<style scoped>
-.invoice-detail {
-  padding: 20px;
 }
-
-.card {
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.badge {
-  padding: 8px 12px;
-  font-size: 0.9em;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-@media print {
-  .actions, .btn {
-    display: none !important;
-  }
-
-  .card {
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .card-header {
-    background-color: transparent !important;
-    border-bottom: 2px solid #000 !important;
-  }
-}
-</style> 
+</script> 
