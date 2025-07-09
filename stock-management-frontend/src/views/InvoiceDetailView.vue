@@ -467,29 +467,44 @@ export default {
     };
 
     const handleDownloadPDF = async () => {
+      if (!invoice.value) {
+        alert('Erreur: Facture non disponible');
+        return;
+      }
+
       try {
         loading.value = true;
         const { default: html2pdf } = await import('html2pdf.js');
         
-        const element = printTemplate.value.$el;
+        // Attendre que le template soit monté
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const element = printTemplate.value.$el.cloneNode(true);
+        element.style.display = 'block'; // Rendre visible pour la génération
+        document.body.appendChild(element);
         
         const opt = {
-          margin: 20,
+          margin: [15, 15, 15, 15],
           filename: `facture-${invoice.value.number}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
+          image: { type: 'jpeg', quality: 1 },
           html2canvas: { 
             scale: 2,
             useCORS: true,
-            letterRendering: true
+            letterRendering: true,
+            logging: true,
+            backgroundColor: '#ffffff'
           },
           jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
-            orientation: 'portrait'
+            orientation: 'portrait',
+            compress: true
           }
         };
         
-        await html2pdf().set(opt).from(element).save();
+        const pdf = await html2pdf().set(opt).from(element).save();
+        document.body.removeChild(element);
+        return pdf;
       } catch (error) {
         console.error('Erreur lors de la génération du PDF:', error);
         alert('Erreur lors de la génération du PDF. Veuillez réessayer.');

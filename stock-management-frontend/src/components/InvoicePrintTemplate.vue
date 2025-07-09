@@ -95,6 +95,19 @@ const getDiscountAmount = () => {
   background: white;
   color: #333;
   font-family: Arial, sans-serif;
+  position: relative;
+  box-sizing: border-box;
+}
+
+@media print {
+  .invoice-print {
+    margin: 0;
+    padding: 20mm;
+    max-width: none;
+    width: 210mm;
+    min-height: 297mm;
+    page-break-after: always;
+  }
 }
 
 .preview-mode {

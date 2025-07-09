@@ -121,7 +121,7 @@
                         @click="downloadPDF(invoice)"
                         title="Télécharger PDF"
                       >
-                        <font-awesome-icon icon="download" />
+                        <font-awesome-icon icon="file-pdf" />
                       </button>
                       <button 
                         v-if="invoice.status === 'PENDING'"
@@ -293,9 +293,10 @@ const cancelInvoice = async (invoice) => {
 
 const downloadPDF = async (invoice) => {
   try {
-    await invoiceStore.downloadInvoicePDF(invoice.id);
+    await invoiceStore.downloadPDF(invoice.id);
   } catch (error) {
-    console.error('Error downloading PDF:', error);
+    console.error('Erreur lors du téléchargement du PDF:', error);
+    // Vous pouvez ajouter ici une notification d'erreur pour l'utilisateur
   }
 };
 </script>
@@ -474,10 +475,26 @@ const downloadPDF = async (invoice) => {
   border: none;
   cursor: pointer;
   transition: all 0.2s;
+  margin: 0 2px;
 }
 
 .btn-icon:hover {
   transform: translateY(-1px);
+}
+
+.btn-icon.btn-primary {
+  background-color: #2196F3;
+  border-color: #2196F3;
+  color: white;
+}
+
+.btn-icon.btn-primary:hover {
+  background-color: #1976D2;
+  border-color: #1976D2;
+}
+
+.btn-icon.btn-primary .fa-file-pdf {
+  font-size: 1.1em;
 }
 
 .table-footer {

@@ -65,7 +65,13 @@ import {
   faCalculator,
   faSave,
   faSpinner,
-  faArrowLeft
+  faArrowLeft,
+  faSort,
+  faSortUp,
+  faSortDown,
+  faCheck,
+  faChevronLeft,
+  faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 
 // Ajout des icônes à la bibliothèque
@@ -120,7 +126,13 @@ library.add(
   faCalculator,
   faSave,
   faSpinner,
-  faArrowLeft
+  faArrowLeft,
+  faSort,
+  faSortUp,
+  faSortDown,
+  faCheck,
+  faChevronLeft,
+  faChevronRight
 );
 
 const app = createApp(App);
