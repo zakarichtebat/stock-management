@@ -3,7 +3,7 @@ import { QuoteService } from './quote.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { QuoteStatus } from './quote.service';
 
-@Controller('api/quotes')
+@Controller('quotes')
 export class QuoteController {
   constructor(private readonly quoteService: QuoteService) {}
 
