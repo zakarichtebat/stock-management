@@ -315,12 +315,12 @@ const isPrinting = ref(false)
 const pdfContent = ref(null)
 
 // Informations de l'entreprise (à personnaliser)
-const companyName = ref('StockManager')
+const companyName = ref('DIDOPRO')
 const companyAddress = ref('123 rue du Commerce')
 const companyPostalCode = ref('75000')
 const companyCity = ref('Paris')
 const companyPhone = ref('01 23 45 67 89')
-const companyWebsite = ref('www.stockmanager.com')
+const companyWebsite = ref('www.didopro.com')
 
 const loadQuote = async () => {
   loading.value = true

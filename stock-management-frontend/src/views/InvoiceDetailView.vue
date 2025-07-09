@@ -3,7 +3,7 @@
     <!-- En-tête avec actions -->
     <div class="invoice-header">
       <div class="company-info">
-        <h1 class="company-name">StockManager</h1>
+        <h1 class="company-name">DIDOPRO</h1>
         <div class="invoice-number">Facture #{{ invoice?.number }}</div>
       </div>
       <div class="actions">

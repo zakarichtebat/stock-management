@@ -3,7 +3,7 @@
     <!-- En-tête -->
     <div class="print-header">
       <div class="company-info">
-        <h1>StockManager</h1>
+        <h1>DIDOPRO</h1>
         <div class="invoice-number">Facture #{{ invoice.number }}</div>
         <div class="invoice-date">
           Date d'émission: {{ formatDate(invoice.date) }}<br>

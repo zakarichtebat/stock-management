@@ -8,7 +8,7 @@
           <div class="brand-logo">
             <i class="fas fa-boxes"></i>
           </div>
-          <span class="brand-name">StockManager</span>
+          <span class="brand-name">DIDOPRO</span>
         </router-link>
 
         <!-- Navigation principale -->
