@@ -82,11 +82,52 @@ export class ProductService {
 
   async remove(id: number): Promise<product> {
     // Vérifier si le produit existe
-    await this.findOne(id);
+    const product = await this.findOne(id);
 
-    return this.prisma.product.delete({
-      where: { id },
+    // Vérifier si le produit est utilisé dans des factures ou devis
+    const invoiceItems = await this.prisma.invoiceitem.findMany({
+      where: { productId: id }
     });
+
+    const quoteItems = await this.prisma.quoteitem.findMany({
+      where: { productId: id }
+    });
+
+    // Si le produit est utilisé, on le désactive seulement
+    if (invoiceItems.length > 0 || quoteItems.length > 0) {
+      return this.prisma.product.update({
+        where: { id },
+        data: {
+          isActive: false,
+          updatedAt: new Date()
+        }
+      });
+    }
+
+    // Si le produit n'est pas utilisé, on peut le supprimer physiquement
+    try {
+      // Supprimer l'image si elle existe
+      if (product.imageUrl) {
+        const imagePath = path.join(process.cwd(), 'uploads', product.imageUrl);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      }
+
+      // Supprimer le produit
+      return await this.prisma.product.delete({
+        where: { id }
+      });
+    } catch (error) {
+      // En cas d'erreur, on désactive le produit
+      return this.prisma.product.update({
+        where: { id },
+        data: {
+          isActive: false,
+          updatedAt: new Date()
+        }
+      });
+    }
   }
 
   async search(searchDto: SearchProductDto): Promise<product[]> {
