@@ -245,16 +245,16 @@
             <div class="preview-prices">
               <div class="price-item">
                 <span class="price-label">Prix d'achat:</span>
-                <span class="price-value purchase">{{ form.purchasePrice || 0 }}€</span>
+                <span class="price-value purchase">{{ formatPrice(Number(form.purchasePrice) || 0) }}</span>
               </div>
               <div class="price-item">
                 <span class="price-label">Prix de vente:</span>
-                <span class="price-value sale">{{ form.salePrice || 0 }}€</span>
+                <span class="price-value sale">{{ formatPrice(Number(form.salePrice) || 0) }}</span>
               </div>
               <div class="price-item">
                 <span class="price-label">Marge:</span>
                 <span class="price-value margin" :class="{ positive: margin > 0, negative: margin < 0 }">
-                  {{ margin }}€ ({{ marginPercent }}%)
+                  {{ formatPrice(margin) }} ({{ marginPercent }}%)
                 </span>
               </div>
             </div>
@@ -286,6 +286,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductStore } from '../stores/products'
+import { formatPrice } from '../utils/formatters'
 
 export default {
   name: 'ProductCreateView',
@@ -319,16 +320,15 @@ export default {
     })
 
     const margin = computed(() => {
-      const purchase = parseFloat(form.value.purchasePrice) || 0
-      const sale = parseFloat(form.value.salePrice) || 0
-      return (sale - purchase).toFixed(2)
+      const purchase = Number(form.value.purchasePrice) || 0
+      const sale = Number(form.value.salePrice) || 0
+      return sale - purchase
     })
 
     const marginPercent = computed(() => {
-      const purchase = parseFloat(form.value.purchasePrice) || 0
-      const sale = parseFloat(form.value.salePrice) || 0
-      if (purchase === 0) return '0.0'
-      return (((sale - purchase) / purchase) * 100).toFixed(1)
+      const purchase = Number(form.value.purchasePrice) || 0
+      if (purchase === 0) return 0
+      return ((margin.value / purchase) * 100).toFixed(2)
     })
 
     const formatDate = (date) => {
@@ -396,7 +396,8 @@ export default {
       imagePreview,
       handleImageChange,
       removeImage,
-      createProduct
+      createProduct,
+      formatPrice
     }
   }
 }

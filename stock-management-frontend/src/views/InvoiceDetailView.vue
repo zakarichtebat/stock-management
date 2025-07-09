@@ -76,8 +76,8 @@
               <tr v-for="item in invoice?.invoiceitem" :key="item.id">
                 <td>{{ item.product.name }}</td>
                 <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-right">{{ formatPrice(item.unitPrice) }} €</td>
-                <td class="text-right">{{ formatPrice(item.total) }} €</td>
+                <td class="text-right">{{ formatPrice(item.unitPrice) }}</td>
+                <td class="text-right">{{ formatPrice(item.total) }}</td>
               </tr>
             </tbody>
           </table>
@@ -89,15 +89,15 @@
         <div class="totals-card">
           <div class="total-row">
             <span>Sous-total</span>
-            <span>{{ formatPrice(invoice?.subtotal) }} €</span>
+            <span>{{ formatPrice(invoice?.subtotal) }}</span>
           </div>
           <div class="total-row" v-if="invoice?.discount > 0">
             <span>Remise ({{ invoice.discount }}%)</span>
-            <span class="discount">-{{ formatPrice(discountAmount) }} €</span>
+            <span class="discount">-{{ formatPrice(discountAmount) }}</span>
           </div>
           <div class="total-row grand-total">
             <span>Total</span>
-            <span>{{ formatPrice(invoice?.total) }} €</span>
+            <span>{{ formatPrice(invoice?.total) }}</span>
           </div>
         </div>
       </div>
@@ -365,6 +365,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useInvoiceStore } from '../stores/invoices';
 import InvoicePrintTemplate from '../components/InvoicePrintTemplate.vue';
+import { formatDate, formatPrice } from '../utils/formatters';
 
 export default {
   name: 'InvoiceDetailView',
@@ -393,19 +394,6 @@ export default {
       } finally {
         loading.value = false;
       }
-    };
-
-    const formatDate = (date) => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('fr-FR');
-    };
-
-    const formatPrice = (value) => {
-      if (!value) return '0,00';
-      return new Intl.NumberFormat('fr-FR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
     };
 
     const getStatusClass = (status) => {

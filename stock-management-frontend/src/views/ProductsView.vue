@@ -208,7 +208,7 @@
                 </div>
                 <div class="info-item">
                   <span class="info-label">Prix</span>
-                  <span class="info-value">{{ product.salePrice.toFixed(2) }} €</span>
+                  <span class="info-value">{{ formatPrice(product.salePrice) }}</span>
                 </div>
               </div>
 
@@ -467,7 +467,7 @@ const getStockLevelClass = (product) => {
 const formatPrice = (price) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR'
+    currency: 'MAD'
   }).format(price)
 }
 

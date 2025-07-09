@@ -77,16 +77,16 @@
             <div class="price-stock-grid">
               <div class="price-card">
                 <h3>Prix d'achat</h3>
-                <div class="price-value purchase">{{ product.purchasePrice }}€</div>
+                <div class="price-value purchase">{{ formatPrice(product.purchasePrice) }}</div>
               </div>
               <div class="price-card">
                 <h3>Prix de vente</h3>
-                <div class="price-value sale">{{ product.salePrice }}€</div>
+                <div class="price-value sale">{{ formatPrice(product.salePrice) }}</div>
               </div>
               <div class="price-card">
                 <h3>Marge unitaire</h3>
                 <div class="price-value margin" :class="{ positive: margin > 0, negative: margin < 0 }">
-                  {{ margin }}€ ({{ marginPercent }}%)
+                  {{ formatPrice(margin) }} ({{ marginPercent }}%)
                 </div>
               </div>
             </div>
@@ -105,7 +105,7 @@
                 </div>
                 <div class="stock-item">
                   <label>Valeur totale du stock</label>
-                  <span class="stock-value-total">{{ totalValue }}€</span>
+                  <span class="stock-value-total">{{ formatPrice(totalValue) }}</span>
                 </div>
               </div>
 
@@ -244,18 +244,21 @@ export default {
 
     const margin = computed(() => {
       if (!product.value) return 0
-      return (product.value.salePrice - product.value.purchasePrice).toFixed(2)
+      const purchasePrice = Number(product.value.purchasePrice) || 0
+      const salePrice = Number(product.value.salePrice) || 0
+      return salePrice - purchasePrice
     })
 
     const marginPercent = computed(() => {
-      if (!product.value || product.value.purchasePrice === 0) return 0
-      const percent = ((product.value.salePrice - product.value.purchasePrice) / product.value.purchasePrice) * 100
-      return percent.toFixed(1)
+      if (!product.value || !product.value.purchasePrice) return 0
+      const purchasePrice = Number(product.value.purchasePrice)
+      return ((margin.value / purchasePrice) * 100).toFixed(2)
     })
 
     const totalValue = computed(() => {
       if (!product.value) return 0
-      return (product.value.salePrice * product.value.quantity).toFixed(2)
+      const purchasePrice = Number(product.value.purchasePrice) || 0
+      return purchasePrice * product.value.quantity
     })
 
     const isLowStock = computed(() => {
@@ -330,6 +333,14 @@ export default {
       return date.toLocaleDateString('fr-FR')
     }
 
+    const formatPrice = (price) => {
+      if (price === null || price === undefined) return 'N/A'
+      return new Intl.NumberFormat('ar-MA', {
+        style: 'currency',
+        currency: 'MAD'
+      }).format(price)
+    }
+
     async function adjustStock(amount) {
       if (!product.value) return
       try {
@@ -375,6 +386,7 @@ export default {
       daysUntilExpiration,
       alerts,
       formatDate,
+      formatPrice,
       adjustStock,
       updateStock
     }

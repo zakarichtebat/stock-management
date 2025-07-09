@@ -1,42 +1,24 @@
 <template>
-  <div class="invoice-print" :class="{ 'preview-mode': preview }">
+  <div class="invoice-print" :class="{ preview }">
     <!-- En-tête -->
-    <div class="header">
+    <div class="print-header">
       <div class="company-info">
-        <div class="brand">
-          <h1 class="company-name">StockManager</h1>
-          <div class="company-tagline">Gestion de Stock Professionnelle</div>
-        </div>
-        <div class="company-details">
-          <p>123 Rue du Commerce</p>
-          <p>75001 Paris, France</p>
-          <p>Tél: +33 1 23 45 67 89</p>
-          <p>Email: contact@stockmanager.com</p>
-        </div>
-      </div>
-      <div class="invoice-details">
-        <h2 class="invoice-title">FACTURE</h2>
-        <div class="invoice-number">F{{ invoice.number }}</div>
-        <div class="dates">
-          <div class="date-row">
-            <span class="label">Date d'émission:</span>
-            <span class="value">{{ formatDate(invoice.date) }}</span>
-          </div>
-          <div class="date-row" v-if="invoice.dueDate">
-            <span class="label">Date d'échéance:</span>
-            <span class="value">{{ formatDate(invoice.dueDate) }}</span>
-          </div>
+        <h1>StockManager</h1>
+        <div class="invoice-number">Facture #{{ invoice.number }}</div>
+        <div class="invoice-date">
+          Date d'émission: {{ formatDate(invoice.date) }}<br>
+          Date d'échéance: {{ formatDate(invoice.dueDate) }}
         </div>
       </div>
     </div>
 
-    <!-- Section Client -->
+    <!-- Informations client -->
     <div class="client-section">
-      <div class="section-title">FACTURER À</div>
-      <div class="client-details">
-        <h3 class="client-name">{{ invoice.clientName }}</h3>
-        <p v-if="invoice.clientEmail" class="client-email">{{ invoice.clientEmail }}</p>
-        <p v-if="invoice.clientAddress" class="client-address">{{ invoice.clientAddress }}</p>
+      <h2>Client</h2>
+      <div class="client-info">
+        <strong>{{ invoice.clientName }}</strong><br>
+        <span v-if="invoice.clientEmail">{{ invoice.clientEmail }}</span><br>
+        <span v-if="invoice.clientAddress">{{ invoice.clientAddress }}</span>
       </div>
     </div>
 
@@ -45,23 +27,18 @@
       <table class="products-table">
         <thead>
           <tr>
-            <th class="description">DESCRIPTION</th>
-            <th class="quantity">QUANTITÉ</th>
-            <th class="unit-price">PRIX UNITAIRE</th>
-            <th class="total">TOTAL</th>
+            <th>Produit</th>
+            <th class="quantity">Qté</th>
+            <th class="unit-price">Prix unitaire</th>
+            <th class="total">Total</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in invoice.invoiceitem" :key="item.id">
-            <td class="description">
-              <div class="product-name">{{ item.product.name }}</div>
-              <div v-if="item.product.description" class="product-description">
-                {{ item.product.description }}
-              </div>
-            </td>
+            <td>{{ item.product.name }}</td>
             <td class="quantity">{{ item.quantity }}</td>
-            <td class="unit-price">{{ formatPrice(item.unitPrice) }} €</td>
-            <td class="total">{{ formatPrice(item.total) }} €</td>
+            <td class="unit-price">{{ formatPrice(item.unitPrice) }}</td>
+            <td class="total">{{ formatPrice(item.total) }}</td>
           </tr>
         </tbody>
       </table>
@@ -69,62 +46,45 @@
 
     <!-- Totaux -->
     <div class="totals-section">
-      <div class="totals-table">
-        <div class="total-row">
-          <span class="label">Sous-total</span>
-          <span class="value">{{ formatPrice(invoice.subtotal) }} €</span>
-        </div>
-        <div v-if="invoice.discount > 0" class="total-row discount">
-          <span class="label">Remise ({{ invoice.discount }}%)</span>
-          <span class="value">-{{ formatPrice(getDiscountAmount()) }} €</span>
-        </div>
-        <div class="total-row grand-total">
-          <span class="label">Total</span>
-          <span class="value">{{ formatPrice(invoice.total) }} €</span>
-        </div>
+      <div class="total-row">
+        <span class="label">Sous-total</span>
+        <span class="value">{{ formatPrice(invoice.subtotal) }}</span>
+      </div>
+      <div v-if="invoice.discount > 0" class="total-row discount">
+        <span class="label">Remise ({{ invoice.discount }}%)</span>
+        <span class="value">-{{ formatPrice(getDiscountAmount()) }}</span>
+      </div>
+      <div class="total-row grand-total">
+        <span class="label">Total</span>
+        <span class="value">{{ formatPrice(invoice.total) }}</span>
       </div>
     </div>
 
-   
-   
+    <!-- Pied de page -->
+    <div class="print-footer">
+      <p>Merci de votre confiance !</p>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'InvoicePrintTemplate',
-  props: {
-    invoice: {
-      type: Object,
-      required: true
-    },
-    preview: {
-      type: Boolean,
-      default: false
-    }
+<script setup>
+import { formatDate, formatPrice } from '../utils/formatters'
+
+const props = defineProps({
+  invoice: {
+    type: Object,
+    required: true
   },
-  methods: {
-    formatDate(date) {
-      if (!date) return '';
-      const options = { 
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      };
-      return new Date(date).toLocaleDateString('fr-FR', options);
-    },
-    formatPrice(value) {
-      if (!value) return '0,00';
-      return new Intl.NumberFormat('fr-FR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
-    },
-    getDiscountAmount() {
-      return (this.invoice.subtotal * this.invoice.discount) / 100;
-    }
+  preview: {
+    type: Boolean,
+    default: false
   }
-};
+})
+
+const getDiscountAmount = () => {
+  if (!props.invoice.subtotal || !props.invoice.discount) return 0
+  return (props.invoice.subtotal * props.invoice.discount) / 100
+}
 </script>
 
 <style scoped>

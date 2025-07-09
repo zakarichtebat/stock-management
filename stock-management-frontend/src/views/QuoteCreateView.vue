@@ -175,15 +175,15 @@
                 <div class="totals-section">
                   <div class="total-row">
                     <span>Sous-total :</span>
-                    <span>{{ formatPrice(subtotal) }} €</span>
+                    <span>{{ formatPrice(subtotal) }} MAD</span>
                   </div>
                   <div class="total-row" v-if="quote.discount > 0">
                     <span>Remise ({{ quote.discount }}%) :</span>
-                    <span>-{{ formatPrice(discountAmount) }} €</span>
+                    <span>-{{ formatPrice(discountAmount) }} MAD</span>
                   </div>
                   <div class="total-row final">
                     <span class="label">Total</span>
-                    <span class="value">{{ formatPrice(total) }} €</span>
+                    <span class="value">{{ formatPrice(total) }} MAD</span>
                   </div>
                 </div>
               </div>
@@ -231,7 +231,7 @@
                             :key="product.id"
                             :value="product.id"
                           >
-                            {{ product.name }} ({{ formatPrice(product.salePrice) }} €)
+                            {{ product.name }} ({{ formatPrice(product.salePrice) }} MAD)
                           </option>
                         </select>
                       </div>
@@ -259,7 +259,7 @@
                             required
                             @change="updateItemTotal(index)"
                           >
-                          <span class="input-group-text">€</span>
+                          <span class="input-group-text">MAD</span>
                         </div>
                       </div>
                     </td>
@@ -272,7 +272,7 @@
                             class="form-control text-end"
                             readonly
                           >
-                          <span class="input-group-text">€</span>
+                          <span class="input-group-text">MAD</span>
                         </div>
                       </div>
                     </td>
@@ -376,8 +376,8 @@
                     <tr v-for="item in quote.items" :key="item.productId">
                       <td>{{ getProductName(item.productId) }}</td>
                       <td>{{ item.quantity }}</td>
-                      <td>{{ formatPrice(item.unitPrice) }} €</td>
-                      <td>{{ formatPrice(item.total) }} €</td>
+                      <td>{{ formatPrice(item.unitPrice) }} MAD</td>
+                      <td>{{ formatPrice(item.total) }} MAD</td>
                     </tr>
                   </tbody>
                 </table>
@@ -386,15 +386,15 @@
                 <div class="preview-totals">
                   <div class="preview-total-row">
                     <span class="label">Sous-total</span>
-                    <span class="value">{{ formatPrice(subtotal) }} €</span>
+                    <span class="value">{{ formatPrice(subtotal) }} MAD</span>
                   </div>
                   <div class="preview-total-row" v-if="quote.discount > 0">
                     <span class="label">Remise ({{ quote.discount }}%)</span>
-                    <span class="value">-{{ formatPrice(discountAmount) }} €</span>
+                    <span class="value">-{{ formatPrice(discountAmount) }} MAD</span>
                   </div>
                   <div class="preview-total-row final">
                     <span class="label">Total</span>
-                    <span class="value">{{ formatPrice(total) }} €</span>
+                    <span class="value">{{ formatPrice(total) }} MAD</span>
                   </div>
                 </div>
               </div>

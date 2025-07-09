@@ -438,12 +438,9 @@ const getDiscountAmount = () => {
 }
 
 const formatPrice = (price, withCurrency = true) => {
-  if (!price) return '0,00' + (withCurrency ? ' €' : '')
-  const formatted = new Intl.NumberFormat('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(price)
-  return formatted + (withCurrency ? ' €' : '')
+  if (!price) return '0,00' + (withCurrency ? ' MAD' : '');
+  const formatted = price.toFixed(2).replace('.', ',');
+  return formatted + (withCurrency ? ' MAD' : '');
 }
 
 const formatDate = (date) => {

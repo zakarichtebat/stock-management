@@ -206,19 +206,19 @@ export class InvoiceService {
     invoice.invoiceitem.forEach(item => {
       doc.text(item.product.name, 50, y, { width: 140 });
       doc.text(item.quantity.toString(), 190, y, { width: 140 });
-      doc.text(`${item.unitPrice.toFixed(2)} €`, 330, y, { width: 140 });
-      doc.text(`${item.total.toFixed(2)} €`, 470, y, { width: 140 });
+      doc.text(`${item.unitPrice.toFixed(2)} MAD`, 330, y, { width: 140 });
+      doc.text(`${item.total.toFixed(2)} MAD`, 470, y, { width: 140 });
       y += 20;
     });
 
     // Add totals
     doc.moveDown();
-    doc.text(`Sous-total: ${invoice.subtotal.toFixed(2)} €`, { align: 'right' });
+    doc.text(`Sous-total: ${invoice.subtotal.toFixed(2)} MAD`, { align: 'right' });
     if (invoice.discount > 0) {
-      doc.text(`Remise (${invoice.discount}%): ${((invoice.subtotal * invoice.discount) / 100).toFixed(2)} €`, { align: 'right' });
+      doc.text(`Remise (${invoice.discount}%): ${((invoice.subtotal * invoice.discount) / 100).toFixed(2)} MAD`, { align: 'right' });
     }
     doc.font('Helvetica-Bold');
-    doc.text(`Total: ${invoice.total.toFixed(2)} €`, { align: 'right' });
+    doc.text(`Total: ${invoice.total.toFixed(2)} MAD`, { align: 'right' });
 
     doc.end();
 

@@ -20,9 +20,9 @@ export const formatDate = (date) => {
  */
 export const formatPrice = (price) => {
   if (typeof price !== 'number') return '';
-  return new Intl.NumberFormat('fr-FR', {
+  return new Intl.NumberFormat('ar-MA', {
     style: 'currency',
-    currency: 'EUR'
+    currency: 'MAD'
   }).format(price);
 };
 
