@@ -52,7 +52,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in invoice.items" :key="item.id">
+          <tr v-for="item in invoice.invoiceitem" :key="item.id">
             <td class="description">
               <div class="product-name">{{ item.product.name }}</div>
               <div v-if="item.product.description" class="product-description">
@@ -78,12 +78,8 @@
           <span class="label">Remise ({{ invoice.discount }}%)</span>
           <span class="value">-{{ formatPrice(getDiscountAmount()) }} €</span>
         </div>
-        <div class="total-row">
-          <span class="label">TVA ({{ invoice.taxRate }}%)</span>
-          <span class="value">{{ formatPrice(invoice.taxAmount) }} €</span>
-        </div>
         <div class="total-row grand-total">
-          <span class="label">Total TTC</span>
+          <span class="label">Total</span>
           <span class="value">{{ formatPrice(invoice.total) }} €</span>
         </div>
       </div>

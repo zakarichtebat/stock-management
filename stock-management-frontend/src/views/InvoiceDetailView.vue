@@ -73,7 +73,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in invoice?.items" :key="item.id">
+              <tr v-for="item in invoice?.invoiceitem" :key="item.id">
                 <td>{{ item.product.name }}</td>
                 <td class="text-center">{{ item.quantity }}</td>
                 <td class="text-right">{{ formatPrice(item.unitPrice) }} €</td>
@@ -93,14 +93,10 @@
           </div>
           <div class="total-row" v-if="invoice?.discount > 0">
             <span>Remise ({{ invoice.discount }}%)</span>
-            <span class="discount">-{{ formatPrice(getDiscountAmount()) }} €</span>
-          </div>
-          <div class="total-row">
-            <span>TVA ({{ invoice?.taxRate }}%)</span>
-            <span>{{ formatPrice(invoice?.taxAmount) }} €</span>
+            <span class="discount">-{{ formatPrice(discountAmount) }} €</span>
           </div>
           <div class="total-row grand-total">
-            <span>Total TTC</span>
+            <span>Total</span>
             <span>{{ formatPrice(invoice?.total) }} €</span>
           </div>
         </div>
@@ -365,7 +361,7 @@ h2 {
 </style>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useInvoiceStore } from '../stores/invoices';
 import InvoicePrintTemplate from '../components/InvoicePrintTemplate.vue';
@@ -381,6 +377,12 @@ export default {
     const invoice = ref(null);
     const loading = ref(false);
     const printTemplate = ref(null);
+
+    // Computed properties
+    const discountAmount = computed(() => {
+      if (!invoice.value) return 0;
+      return (invoice.value.subtotal * invoice.value.discount) / 100;
+    });
 
     const loadInvoice = async () => {
       loading.value = true;
@@ -424,11 +426,6 @@ export default {
         'OVERDUE': 'En retard'
       };
       return labels[status] || status;
-    };
-
-    const getDiscountAmount = () => {
-      if (!invoice.value) return 0;
-      return (invoice.value.subtotal * invoice.value.discount) / 100;
     };
 
     const markAsPaid = async () => {
@@ -521,11 +518,11 @@ export default {
       invoice,
       loading,
       printTemplate,
+      discountAmount,
       formatDate,
       formatPrice,
       getStatusClass,
       getStatusLabel,
-      getDiscountAmount,
       markAsPaid,
       handlePrint,
       handleDownloadPDF

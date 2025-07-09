@@ -36,11 +36,6 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  taxRate?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
   discount?: number;
 
   @IsOptional()

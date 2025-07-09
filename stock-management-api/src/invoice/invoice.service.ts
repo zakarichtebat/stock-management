@@ -53,23 +53,19 @@ export class InvoiceService {
     
     if (existingInvoice) {
       // If number exists, recursively try the next number
-      const nextSequence = String(parseInt(sequence) + 1).padStart(3, '0');
       return this.generateInvoiceNumber();
     }
     
     return proposedNumber;
   }
 
-  private calculateTotals(items: any[], discount: number = 0, taxRate: number = 20) {
+  private calculateTotals(items: any[], discount: number = 0) {
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const discountAmount = (subtotal * discount) / 100;
-    const taxableAmount = subtotal - discountAmount;
-    const taxAmount = (taxableAmount * taxRate) / 100;
-    const total = taxableAmount + taxAmount;
+    const total = subtotal - discountAmount;
 
     return {
       subtotal,
-      taxAmount,
       total
     };
   }
@@ -78,10 +74,9 @@ export class InvoiceService {
     const { items, ...invoiceData } = createInvoiceDto;
     
     // Calculate totals
-    const { subtotal, taxAmount, total } = this.calculateTotals(
+    const { subtotal, total } = this.calculateTotals(
       items,
-      invoiceData.discount || 0,
-      invoiceData.taxRate || 20
+      invoiceData.discount || 0
     );
 
     // Generate invoice number
@@ -91,25 +86,32 @@ export class InvoiceService {
     const dueDate = invoiceData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     // Create invoice with items
-    return this.prisma.invoice.create({
+    const invoice = await this.prisma.invoice.create({
       data: {
         number,
         dueDate,
         ...invoiceData,
         subtotal,
-        taxAmount,
         total,
-        items: {
-          create: items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.quantity * item.unitPrice
-          }))
+        updatedAt: new Date(),
+        invoiceitem: {
+          createMany: {
+            data: items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.quantity * item.unitPrice,
+              updatedAt: new Date()
+            }))
+          }
         }
-      },
+      }
+    });
+
+    return this.prisma.invoice.findUnique({
+      where: { id: invoice.id },
       include: {
-        items: {
+        invoiceitem: {
           include: {
             product: true
           }
@@ -121,7 +123,7 @@ export class InvoiceService {
   async findAll() {
     return this.prisma.invoice.findMany({
       include: {
-        items: {
+        invoiceitem: {
           include: {
             product: true
           }
@@ -138,7 +140,7 @@ export class InvoiceService {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
       include: {
-        items: {
+        invoiceitem: {
           include: {
             product: true
           }
@@ -198,44 +200,28 @@ export class InvoiceService {
       doc.text(text, 50 + (i * 140), tableTop, { width: 140, align: 'left' });
     });
 
-    // Table rows
+    // Table content
     doc.font('Helvetica');
-    let tableRow = tableTop + 20;
-    invoice.items.forEach(item => {
-      doc.text(item.product.name, 50, tableRow, { width: 140 });
-      doc.text(item.quantity.toString(), 190, tableRow, { width: 140 });
-      doc.text(`${item.unitPrice.toFixed(2)} €`, 330, tableRow, { width: 140 });
-      doc.text(`${item.total.toFixed(2)} €`, 470, tableRow, { width: 140 });
-      tableRow += 20;
+    let y = tableTop + 20;
+    invoice.invoiceitem.forEach(item => {
+      doc.text(item.product.name, 50, y, { width: 140 });
+      doc.text(item.quantity.toString(), 190, y, { width: 140 });
+      doc.text(`${item.unitPrice.toFixed(2)} €`, 330, y, { width: 140 });
+      doc.text(`${item.total.toFixed(2)} €`, 470, y, { width: 140 });
+      y += 20;
     });
 
-    doc.moveDown();
-    tableRow += 20;
-
     // Add totals
+    doc.moveDown();
     doc.text(`Sous-total: ${invoice.subtotal.toFixed(2)} €`, { align: 'right' });
     if (invoice.discount > 0) {
-      doc.text(`Remise (${invoice.discount}%): ${(invoice.subtotal * invoice.discount / 100).toFixed(2)} €`, { align: 'right' });
+      doc.text(`Remise (${invoice.discount}%): ${((invoice.subtotal * invoice.discount) / 100).toFixed(2)} €`, { align: 'right' });
     }
-    doc.text(`TVA (${invoice.taxRate}%): ${invoice.taxAmount.toFixed(2)} €`, { align: 'right' });
     doc.font('Helvetica-Bold');
-    doc.text(`Total TTC: ${invoice.total.toFixed(2)} €`, { align: 'right' });
-
-    // Add footer
-    doc.fontSize(10).text(
-      'Merci pour votre confiance !',
-      50,
-      doc.page.height - 50,
-      { align: 'center' }
-    );
+    doc.text(`Total: ${invoice.total.toFixed(2)} €`, { align: 'right' });
 
     doc.end();
 
-    return new Promise((resolve, reject) => {
-      doc.on('end', () => {
-        resolve(Buffer.concat(buffers));
-      });
-      doc.on('error', reject);
-    });
+    return Buffer.concat(buffers);
   }
 } 

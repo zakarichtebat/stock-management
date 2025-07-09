@@ -12,6 +12,5 @@ export class CreateQuoteDto {
   clientEmail?: string;
   clientAddress?: string;
   items: CreateQuoteItemDto[];
-  taxRate?: number;
   discount?: number;
 } 

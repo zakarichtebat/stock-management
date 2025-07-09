@@ -144,21 +144,7 @@
               </div>
               <div class="quote-card-body">
                 <div class="form-row">
-                  <div class="form-group col-md-6">
-                    <label class="form-label">Taux de TVA (%)</label>
-                    <div class="input-group">
-                      <i class="fas fa-percentage input-group-icon"></i>
-                      <input
-                        v-model.number="quote.taxRate"
-                        type="number"
-                        class="form-control"
-                        step="0.1"
-                        min="0"
-                        @change="updateTotals"
-                      >
-                    </div>
-                  </div>
-                  <div class="form-group col-md-6">
+                  <div class="form-group col-md-12">
                     <label class="form-label">Remise (%)</label>
                     <div class="input-group">
                       <i class="fas fa-tags input-group-icon"></i>
@@ -195,13 +181,9 @@
                     <span>Remise ({{ quote.discount }}%) :</span>
                     <span>-{{ formatPrice(discountAmount) }} €</span>
                   </div>
-                  <div class="total-row">
-                    <span>TVA ({{ quote.taxRate }}%) :</span>
-                    <span>{{ formatPrice(taxAmount) }} €</span>
-                  </div>
-                  <div class="total-row total-row-final">
-                    <span>Total TTC :</span>
-                    <span>{{ formatPrice(total) }} €</span>
+                  <div class="total-row final">
+                    <span class="label">Total</span>
+                    <span class="value">{{ formatPrice(total) }} €</span>
                   </div>
                 </div>
               </div>
@@ -410,12 +392,8 @@
                     <span class="label">Remise ({{ quote.discount }}%)</span>
                     <span class="value">-{{ formatPrice(discountAmount) }} €</span>
                   </div>
-                  <div class="preview-total-row">
-                    <span class="label">TVA ({{ quote.taxRate }}%)</span>
-                    <span class="value">{{ formatPrice(taxAmount) }} €</span>
-                  </div>
                   <div class="preview-total-row final">
-                    <span class="label">Total TTC</span>
+                    <span class="label">Total</span>
                     <span class="value">{{ formatPrice(total) }} €</span>
                   </div>
                 </div>
@@ -458,7 +436,6 @@ export default {
       clientEmail: '',
       clientAddress: '',
       items: [],
-      taxRate: 20,
       discount: 0,
       date: new Date().toISOString().split('T')[0],
       status: 'DRAFT'
@@ -478,20 +455,9 @@ export default {
       return (subtotal.value * discount) / 100;
     });
 
-    // Montant imposable (après remise)
-    const taxableAmount = computed(() => {
-      return subtotal.value - discountAmount.value;
-    });
-
-    // Calcul de la TVA
-    const taxAmount = computed(() => {
-      const taxRate = parseFloat(quote.value.taxRate || 0);
-      return (taxableAmount.value * taxRate) / 100;
-    });
-
-    // Calcul du total TTC
+    // Calcul du total
     const total = computed(() => {
-      return taxableAmount.value + taxAmount.value;
+      return subtotal.value - discountAmount.value;
     });
 
     const isFormValid = computed(() => {
@@ -573,7 +539,6 @@ export default {
             quantity: item.quantity,
             unitPrice: item.unitPrice
           })),
-          taxRate: quote.value.taxRate,
           discount: quote.value.discount
         };
         
@@ -629,7 +594,6 @@ export default {
       products,
       subtotal,
       discountAmount,
-      taxAmount,
       total,
       isFormValid,
       formatPrice,

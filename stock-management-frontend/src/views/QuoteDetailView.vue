@@ -87,7 +87,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="item in quote?.items" :key="item.id">
+                      <tr v-for="item in quote?.quoteitem" :key="item.id">
                         <td>
                           <div class="product-info">
                             <span class="product-name">{{ item.product.name }}</span>
@@ -169,12 +169,8 @@
                     <span>Remise ({{ quote.discount }}%)</span>
                     <span class="text-danger">-{{ formatPrice(getDiscountAmount()) }}</span>
                   </div>
-                  <div class="total-item">
-                    <span>TVA ({{ quote?.taxRate }}%)</span>
-                    <span>{{ formatPrice(quote?.taxAmount) }}</span>
-                  </div>
                   <div class="total-item total-final">
-                    <span>Total TTC</span>
+                    <span>Total</span>
                     <span>{{ formatPrice(quote?.total) }}</span>
                   </div>
                 </div>
@@ -245,18 +241,18 @@
           <table class="products-table">
             <thead>
               <tr>
+                <th>Produit</th>
                 <th>Quantité</th>
-                <th>Désignation</th>
-                <th>Prix unitaire HT</th>
-                <th>Prix total HT</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in quote?.items" :key="item.id">
-                <td class="text-center">{{ item.quantity }}</td>
+              <tr v-for="item in quote?.quoteitem" :key="item.id">
                 <td>{{ item.product.name }}</td>
-                <td class="text-right">{{ formatPrice(item.unitPrice, false) }}</td>
-                <td class="text-right">{{ formatPrice(item.total, false) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ formatPrice(item.unitPrice) }}</td>
+                <td>{{ formatPrice(item.total) }}</td>
               </tr>
             </tbody>
           </table>
@@ -264,20 +260,20 @@
 
         <!-- Totaux -->
         <div class="totals-section">
-          <table class="totals-table">
-            <tr>
-              <td>Total HT</td>
-              <td class="text-right">{{ formatPrice(quote?.subtotal, false) }}</td>
-            </tr>
-            <tr>
-              <td>TVA {{ quote?.taxRate }}%</td>
-              <td class="text-right">{{ formatPrice(quote?.taxAmount, false) }}</td>
-            </tr>
-            <tr class="total-ttc">
-              <td>Total TTC</td>
-              <td class="text-right">{{ formatPrice(quote?.total, false) }}</td>
-            </tr>
-          </table>
+          <div class="totals-table">
+            <div class="total-row">
+              <span class="label">Sous-total</span>
+              <span class="value">{{ formatPrice(quote?.subtotal) }}</span>
+            </div>
+            <div v-if="quote?.discount > 0" class="total-row discount">
+              <span class="label">Remise ({{ quote.discount }}%)</span>
+              <span class="value">-{{ formatPrice(getDiscountAmount()) }}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span class="label">Total</span>
+              <span class="value">{{ formatPrice(quote?.total) }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Pied de page -->

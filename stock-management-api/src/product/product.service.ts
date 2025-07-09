@@ -1,15 +1,17 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Product } from '@prisma/client';
+import { product } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { SearchProductDto } from './dto/search-product.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createProductDto: CreateProductDto): Promise<Product> {
+  async create(createProductDto: CreateProductDto): Promise<product> {
     // Vérifier si le code-barres existe déjà
     if (createProductDto.barcode) {
       const existingProduct = await this.prisma.product.findUnique({
@@ -25,19 +27,20 @@ export class ProductService {
       ...createProductDto,
       entryDate: createProductDto.entryDate ? new Date(createProductDto.entryDate) : new Date(),
       expirationDate: createProductDto.expirationDate ? new Date(createProductDto.expirationDate) : null,
+      updatedAt: new Date()
     };
 
     return this.prisma.product.create({ data });
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(): Promise<product[]> {
     return this.prisma.product.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: number): Promise<Product> {
+  async findOne(id: number): Promise<product> {
     const product = await this.prisma.product.findUnique({
       where: { id },
     });
@@ -49,7 +52,7 @@ export class ProductService {
     return product;
   }
 
-  async update(id: number, updateProductDto: UpdateProductDto): Promise<Product> {
+  async update(id: number, updateProductDto: UpdateProductDto): Promise<product> {
     // Vérifier si le produit existe
     await this.findOne(id);
 
@@ -68,6 +71,7 @@ export class ProductService {
       ...updateProductDto,
       entryDate: updateProductDto.entryDate ? new Date(updateProductDto.entryDate) : undefined,
       expirationDate: updateProductDto.expirationDate ? new Date(updateProductDto.expirationDate) : undefined,
+      updatedAt: new Date()
     };
 
     return this.prisma.product.update({
@@ -76,7 +80,7 @@ export class ProductService {
     });
   }
 
-  async remove(id: number): Promise<Product> {
+  async remove(id: number): Promise<product> {
     // Vérifier si le produit existe
     await this.findOne(id);
 
@@ -85,7 +89,7 @@ export class ProductService {
     });
   }
 
-  async search(searchDto: SearchProductDto): Promise<Product[]> {
+  async search(searchDto: SearchProductDto): Promise<product[]> {
     const where: any = {};
 
     // Filtres de base
@@ -141,7 +145,7 @@ export class ProductService {
     });
   }
 
-  async findLowStockProducts(): Promise<Product[]> {
+  async findLowStockProducts(): Promise<product[]> {
     return this.prisma.product.findMany({
       where: {
         isActive: true,
@@ -151,7 +155,7 @@ export class ProductService {
     });
   }
 
-  async findExpiringProducts(days: number = 30): Promise<Product[]> {
+  async findExpiringProducts(days: number = 30): Promise<product[]> {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
 
@@ -167,7 +171,7 @@ export class ProductService {
     });
   }
 
-  async findExpiredProducts(): Promise<Product[]> {
+  async findExpiredProducts(): Promise<product[]> {
     return this.prisma.product.findMany({
       where: {
         isActive: true,
@@ -179,7 +183,7 @@ export class ProductService {
     });
   }
 
-  async updateStock(id: number, quantity: number): Promise<Product> {
+  async updateStock(id: number, quantity: number): Promise<product> {
     await this.findOne(id);
 
     return this.prisma.product.update({
@@ -188,7 +192,7 @@ export class ProductService {
     });
   }
 
-  async adjustStock(id: number, adjustment: number): Promise<Product> {
+  async adjustStock(id: number, adjustment: number): Promise<product> {
     const product = await this.findOne(id);
     const newQuantity = Math.max(0, product.quantity + adjustment);
 

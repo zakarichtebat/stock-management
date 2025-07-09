@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
-import { Prisma } from '@prisma/client';
 import { InvoiceService } from '../invoice/invoice.service';
 
 export const QuoteStatus = {
@@ -40,16 +39,13 @@ export class QuoteService {
     return `Q${year}${month}${sequence}`;
   }
 
-  private calculateTotals(items: any[], discount: number = 0, taxRate: number = 20) {
+  private calculateTotals(items: any[], discount: number = 0) {
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const discountAmount = (subtotal * discount) / 100;
-    const taxableAmount = subtotal - discountAmount;
-    const taxAmount = (taxableAmount * taxRate) / 100;
-    const total = taxableAmount + taxAmount;
+    const total = subtotal - discountAmount;
 
     return {
       subtotal,
-      taxAmount,
       total
     };
   }
@@ -58,35 +54,41 @@ export class QuoteService {
     const { items, ...quoteData } = createQuoteDto;
     
     // Calculate totals
-    const { subtotal, taxAmount, total } = this.calculateTotals(
+    const { subtotal, total } = this.calculateTotals(
       items,
-      quoteData.discount || 0,
-      quoteData.taxRate || 20
+      quoteData.discount || 0
     );
 
     // Generate quote number
     const number = await this.generateQuoteNumber();
 
     // Create quote with items
-    return this.prisma.quote.create({
+    const quote = await this.prisma.quote.create({
       data: {
         number,
         date: new Date(),
         ...quoteData,
         subtotal,
-        taxAmount,
         total,
-        items: {
-          create: items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.quantity * item.unitPrice
-          }))
+        updatedAt: new Date(),
+        quoteitem: {
+          createMany: {
+            data: items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.quantity * item.unitPrice,
+              updatedAt: new Date()
+            }))
+          }
         }
-      },
+      }
+    });
+
+    return this.prisma.quote.findUnique({
+      where: { id: quote.id },
       include: {
-        items: {
+        quoteitem: {
           include: {
             product: true
           }
@@ -98,7 +100,7 @@ export class QuoteService {
   async findAll() {
     return this.prisma.quote.findMany({
       include: {
-        items: {
+        quoteitem: {
           include: {
             product: true
           }
@@ -114,7 +116,7 @@ export class QuoteService {
     const quote = await this.prisma.quote.findUnique({
       where: { id },
       include: {
-        items: {
+        quoteitem: {
           include: {
             product: true
           }
@@ -132,7 +134,10 @@ export class QuoteService {
   async updateStatus(id: number, status: QuoteStatusType) {
     return this.prisma.quote.update({
       where: { id },
-      data: { status }
+      data: { 
+        status,
+        updatedAt: new Date()
+      }
     });
   }
 
@@ -144,7 +149,7 @@ export class QuoteService {
         const quote = await prisma.quote.findUnique({
           where: { id },
           include: {
-            items: {
+            quoteitem: {
               include: {
                 product: true
               }
@@ -166,7 +171,7 @@ export class QuoteService {
         }
 
         // 3. Check for items
-        if (!quote.items || quote.items.length === 0) {
+        if (!quote.quoteitem || quote.quoteitem.length === 0) {
           throw new BadRequestException('Cannot convert quote with no items');
         }
 
@@ -199,16 +204,7 @@ export class QuoteService {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 30);
 
-        // 6. First update quote status to prevent concurrent conversions
-        await prisma.quote.update({
-          where: { id },
-          data: { 
-            status: QuoteStatus.CONVERTED,
-            updatedAt: new Date()
-          }
-        });
-
-        // 7. Create invoice
+        // 6. Create invoice
         const invoice = await prisma.invoice.create({
           data: {
             number: invoiceNumber,
@@ -218,60 +214,51 @@ export class QuoteService {
             clientEmail: quote.clientEmail,
             clientAddress: quote.clientAddress,
             subtotal: quote.subtotal,
-            taxRate: quote.taxRate,
-            taxAmount: quote.taxAmount,
             discount: quote.discount,
             total: quote.total,
-            status: 'PENDING',
             quoteId: quote.id,
-            items: {
-              create: quote.items.map(item => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                total: item.quantity * item.unitPrice
-              }))
-            }
-          },
-          include: {
-            items: {
-              include: {
-                product: true
+            updatedAt: new Date(),
+            invoiceitem: {
+              createMany: {
+                data: quote.quoteitem.map(item => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                  total: item.total,
+                  updatedAt: new Date()
+                }))
               }
             }
           }
         });
 
-        return { 
-          invoice,
-          quote: {
-            ...quote,
-            status: QuoteStatus.CONVERTED
+        // 7. Update quote status
+        await prisma.quote.update({
+          where: { id: quote.id },
+          data: { 
+            status: QuoteStatus.CONVERTED,
+            updatedAt: new Date()
           }
-        };
-      }, {
-        timeout: 10000, // 10 second timeout
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable // Highest isolation level
+        });
+
+        // 8. Return created invoice
+        return prisma.invoice.findUnique({
+          where: { id: invoice.id },
+          include: {
+            invoiceitem: {
+              include: {
+                product: true
+              }
+            },
+            quote: true
+          }
+        });
       });
     } catch (error) {
-      // Handle Prisma errors
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new BadRequestException('Duplicate invoice number or quote reference');
-        }
-        if (error.code === 'P2003') {
-          throw new BadRequestException('Referenced product not found');
-        }
-      }
-      
-      // Re-throw application errors
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-
-      // Log unexpected errors
-      console.error('Error converting quote to invoice:', error);
-      throw new BadRequestException('Failed to convert quote to invoice. Please try again.');
+      throw new BadRequestException('Failed to convert quote to invoice');
     }
   }
 } 

@@ -186,19 +186,6 @@
             </h2>
             <div class="totals-grid">
               <div class="form-group">
-                <label for="taxRate">Taux de TVA (%)</label>
-                <input
-                  id="taxRate"
-                  v-model.number="invoice.taxRate"
-                  type="number"
-                  class="form-control"
-                  min="0"
-                  max="100"
-                  @input="calculateTotals"
-                >
-              </div>
-
-              <div class="form-group">
                 <label for="discount">Remise (%)</label>
                 <input
                   id="discount"
@@ -212,21 +199,17 @@
               </div>
 
               <div class="totals-summary">
-                <div class="total-line">
-                  <span>Sous-total :</span>
-                  <span>{{ formatPrice(invoice.subtotal) }}</span>
+                <div class="total-row">
+                  <span class="label">Sous-total</span>
+                  <span class="value">{{ formatPrice(subtotal) }}</span>
                 </div>
-                <div class="total-line" v-if="invoice.discount > 0">
-                  <span>Remise ({{ invoice.discount }}%) :</span>
-                  <span class="text-danger">-{{ formatPrice(getDiscountAmount()) }}</span>
+                <div class="total-row" v-if="invoice.discount > 0">
+                  <span class="label">Remise ({{ invoice.discount }}%)</span>
+                  <span class="value">-{{ formatPrice(discountAmount) }}</span>
                 </div>
-                <div class="total-line">
-                  <span>TVA ({{ invoice.taxRate }}%) :</span>
-                  <span>{{ formatPrice(invoice.taxAmount) }}</span>
-                </div>
-                <div class="total-line total-final">
-                  <span>Total TTC :</span>
-                  <span>{{ formatPrice(invoice.total) }}</span>
+                <div class="total-row grand-total">
+                  <span class="label">Total</span>
+                  <span class="value">{{ formatPrice(total) }}</span>
                 </div>
               </div>
             </div>
@@ -283,12 +266,25 @@ const invoice = ref({
   date: new Date().toISOString().split('T')[0],
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   items: [],
-  taxRate: 20,
   discount: 0,
   subtotal: 0,
-  taxAmount: 0,
   total: 0,
   status: 'PENDING'
+});
+
+// Computed properties for totals
+const subtotal = computed(() => {
+  return invoice.value.items.reduce((sum, item) => {
+    return sum + (item.quantity * item.unitPrice);
+  }, 0);
+});
+
+const discountAmount = computed(() => {
+  return (subtotal.value * invoice.value.discount) / 100;
+});
+
+const total = computed(() => {
+  return subtotal.value - discountAmount.value;
 });
 
 // Load products on mount
@@ -344,30 +340,8 @@ const updateItemTotal = (index) => {
   calculateTotals();
 };
 
-const getDiscountAmount = () => {
-  return (invoice.value.subtotal * invoice.value.discount) / 100;
-};
-
 const calculateTotals = () => {
-  // Calculate subtotal
-  invoice.value.subtotal = invoice.value.items.reduce((sum, item) => {
-    return sum + (item.quantity * item.unitPrice);
-  }, 0);
-
-  // Calculate discount
-  const discountAmount = (invoice.value.subtotal * invoice.value.discount) / 100;
-
-  // Calculate tax
-  const taxableAmount = invoice.value.subtotal - discountAmount;
-  invoice.value.taxAmount = (taxableAmount * invoice.value.taxRate) / 100;
-
-  // Calculate total
-  invoice.value.total = taxableAmount + invoice.value.taxAmount;
-
-  // Format all numbers to 2 decimal places
-  invoice.value.subtotal = parseFloat(invoice.value.subtotal.toFixed(2));
-  invoice.value.taxAmount = parseFloat(invoice.value.taxAmount.toFixed(2));
-  invoice.value.total = parseFloat(invoice.value.total.toFixed(2));
+  // Les totaux sont calculés automatiquement grâce aux computed properties
 };
 
 const validateForm = () => {
@@ -409,23 +383,18 @@ const handleSubmit = async () => {
       clientName: invoice.value.clientName,
       clientEmail: invoice.value.clientEmail || null,
       clientAddress: invoice.value.clientAddress || null,
-      // Format dates as ISO DateTime
       date: formatDate(invoice.value.date),
       dueDate: formatDate(invoice.value.dueDate),
       status: 'PENDING',
-      // Format items
       items: invoice.value.items.map(item => ({
         productId: parseInt(item.productId),
         quantity: parseInt(item.quantity),
         unitPrice: Number(item.unitPrice),
         total: Number((item.quantity * item.unitPrice).toFixed(2))
       })),
-      // Format numeric values
-      taxRate: Number(invoice.value.taxRate),
       discount: Number(invoice.value.discount),
-      subtotal: Number(invoice.value.subtotal.toFixed(2)),
-      taxAmount: Number(invoice.value.taxAmount.toFixed(2)),
-      total: Number(invoice.value.total.toFixed(2))
+      subtotal: Number(subtotal.value.toFixed(2)),
+      total: Number(total.value.toFixed(2))
     };
 
     console.log('Sending invoice data:', formattedData);
