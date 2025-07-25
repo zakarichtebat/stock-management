@@ -1,76 +1,65 @@
 <template>
   <div class="invoice-print" :class="{ preview }">
-    <!-- En-tête -->
-    <div class="print-header">
-      <div class="company-info">
-        <h1>DIDOPRO</h1>
-        <div class="invoice-number">Facture #{{ invoice.number }}</div>
-        <div class="invoice-date">
-          Date d'émission: {{ formatDate(invoice.date) }}<br>
-          Date d'échéance: {{ formatDate(invoice.dueDate) }}
+    <div class="invoice-container">
+      <!-- Header section -->
+      <div class="header-section">
+        <div class="le-box"></div>
+        <div class="right-header">
+          <div class="facture-box">
+            <span>Facture N°</span>
+            <span class="number">{{ invoice.number.slice(-2) }}</span>
+          </div>
+          <div class="client-box">
+            <span>M:</span>
+            <span class="client-name">{{ invoice.clientName }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Informations client -->
-    <div class="client-section">
-      <h2>Client</h2>
-      <div class="client-info">
-        <strong>{{ invoice.clientName }}</strong><br>
-        <span v-if="invoice.clientEmail">{{ invoice.clientEmail }}</span><br>
-        <span v-if="invoice.clientAddress">{{ invoice.clientAddress }}</span>
+      <!-- Table section -->
+      <div class="table-container">
+        <table class="invoice-table">
+          <thead>
+            <tr>
+              <th class="quantity">Quantité</th>
+              <th class="designation">Désignation</th>
+              <th class="unit-price">P. Unit.</th>
+              <th class="total">P. Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in invoice.invoiceitem" :key="index">
+              <td class="quantity">{{ item.quantity }}</td>
+              <td class="designation">{{ item.product.name }}</td>
+              <td class="unit-price">{{ formatPrice(item.unitPrice) }}</td>
+              <td class="total">{{ formatPrice(item.total) }}</td>
+            </tr>
+            <!-- Empty rows with dotted lines -->
+            <tr v-for="n in 20" :key="'empty-'+n" class="empty-row">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
 
-    <!-- Table des produits -->
-    <div class="products-section">
-      <table class="products-table">
-        <thead>
-          <tr>
-            <th>Produit</th>
-            <th class="quantity">Qté</th>
-            <th class="unit-price">Prix unitaire</th>
-            <th class="total">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in invoice.invoiceitem" :key="item.id">
-            <td>{{ item.product.name }}</td>
-            <td class="quantity">{{ item.quantity }}</td>
-            <td class="unit-price">{{ formatPrice(item.unitPrice) }}</td>
-            <td class="total">{{ formatPrice(item.total) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Totaux -->
-    <div class="totals-section">
-      <div class="total-row">
-        <span class="label">Sous-total</span>
-        <span class="value">{{ formatPrice(invoice.subtotal) }}</span>
+      <!-- Total section -->
+      <div class="total-section">
+        <div class="total-box">
+          <span>Total:</span>
+          <span class="total-amount">{{ formatPrice(invoice.total) }}</span>
+        </div>
       </div>
-      <div v-if="invoice.discount > 0" class="total-row discount">
-        <span class="label">Remise ({{ invoice.discount }}%)</span>
-        <span class="value">-{{ formatPrice(getDiscountAmount()) }}</span>
-      </div>
-      <div class="total-row grand-total">
-        <span class="label">Total</span>
-        <span class="value">{{ formatPrice(invoice.total) }}</span>
-      </div>
-    </div>
-
-    <!-- Pied de page -->
-    <div class="print-footer">
-      <p>Merci de votre confiance !</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { formatDate, formatPrice } from '../utils/formatters'
+import { formatPrice } from '../utils/formatters';
 
-const props = defineProps({
+defineProps({
   invoice: {
     type: Object,
     required: true
@@ -79,244 +68,152 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
-})
-
-const getDiscountAmount = () => {
-  if (!props.invoice.subtotal || !props.invoice.discount) return 0
-  return (props.invoice.subtotal * props.invoice.discount) / 100
-}
+});
 </script>
 
 <style scoped>
 .invoice-print {
-  max-width: 210mm;
-  margin: 0 auto;
-  padding: 20mm;
-  background: white;
-  color: #333;
+  padding: 20px;
   font-family: Arial, sans-serif;
-  position: relative;
-  box-sizing: border-box;
 }
 
-@media print {
-  .invoice-print {
-    margin: 0;
-    padding: 20mm;
-    max-width: none;
-    width: 210mm;
-    min-height: 297mm;
-    page-break-after: always;
-  }
+.invoice-container {
+  border: 2px solid navy;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  height: 900px;
+  display: flex;
+  flex-direction: column;
 }
 
-.preview-mode {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  margin: 20px auto;
-}
-
-.header {
+.header-section {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 40px;
-}
-
-.company-info {
-  flex: 1;
-}
-
-.brand {
   margin-bottom: 20px;
 }
 
-.company-name {
-  color: #2196F3;
-  font-size: 28px;
-  margin: 0;
-  font-weight: bold;
+.le-box {
+  border: 1px solid navy;
+  border-radius: 5px;
+  width: 100px;
+  height: 30px;
 }
 
-.company-tagline {
-  color: #666;
-  font-size: 14px;
-  margin-top: 5px;
+.right-header {
+  width: 250px;
 }
 
-.company-details p {
-  margin: 3px 0;
-  font-size: 12px;
-  color: #666;
+.facture-box {
+  border: 1px solid navy;
+  border-radius: 5px;
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  height: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.invoice-details {
-  text-align: right;
+.client-box {
+  border: 1px solid navy;
+  border-radius: 5px;
+  padding: 5px 10px;
+  height: 25px;
+  display: flex;
+  align-items: center;
 }
 
-.invoice-title {
-  color: #2196F3;
-  font-size: 24px;
-  margin: 0 0 10px 0;
+.table-container {
+  flex: 1;
+  overflow: hidden;
 }
 
-.invoice-number {
-  font-size: 16px;
-  color: #666;
-  margin-bottom: 15px;
-}
-
-.dates {
-  font-size: 12px;
-}
-
-.date-row {
-  margin: 5px 0;
-}
-
-.date-row .label {
-  color: #666;
-  margin-right: 10px;
-}
-
-.client-section {
-  margin-bottom: 40px;
-}
-
-.section-title {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #666;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-}
-
-.client-name {
-  font-size: 18px;
-  margin: 0 0 5px 0;
-}
-
-.client-email,
-.client-address {
-  margin: 3px 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.products-table {
+.invoice-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 30px;
+  border-collapse: separate;
+  border: 1px solid navy;
+  border-radius: 5px;
+  height: calc(100% - 60px); /* Reduced height to make room for total */
 }
 
-.products-table th {
-  background: #f8f9fa;
-  padding: 12px;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #666;
-  border-bottom: 2px solid #dee2e6;
+.invoice-table th,
+.invoice-table td {
+  border: none;
+  padding: 8px;
   text-align: left;
-}
-
-.products-table td {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-.products-table .description {
-  width: 50%;
-}
-
-.products-table .quantity {
-  width: 15%;
-  text-align: center;
-}
-
-.products-table .unit-price,
-.products-table .total {
-  width: 17.5%;
-  text-align: right;
-}
-
-.product-name {
-  font-weight: 500;
-}
-
-.product-description {
   font-size: 12px;
-  color: #666;
-  margin-top: 4px;
 }
 
-.totals-section {
+.invoice-table th {
+  font-weight: normal;
+  border-bottom: 1px solid navy;
+}
+
+.invoice-table td {
+  border-bottom: 1px dotted navy;
+}
+
+.quantity {
+  width: 80px;
+}
+
+.designation {
+  width: auto;
+}
+
+.unit-price,
+.total {
+  width: 100px;
+}
+
+.empty-row td {
+  height: 25px;
+  border-bottom: 1px dotted navy;
+}
+
+/* Vertical lines */
+.invoice-table th,
+.invoice-table td {
+  border-right: 1px solid navy;
+}
+
+.invoice-table th:last-child,
+.invoice-table td:last-child {
+  border-right: none;
+}
+
+.total-section {
+  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 40px;
 }
 
-.totals-table {
-  width: 300px;
-}
-
-.total-row {
+.total-box {
+  border: 1px solid navy;
+  border-radius: 5px;
+  padding: 5px 10px;
+  width: 250px;
+  height: 30px;
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
+  align-items: center;
 }
 
-.total-row .label {
-  color: #666;
-}
-
-.total-row.discount .value {
-  color: #e53935;
-}
-
-.grand-total {
-  font-size: 16px;
+.total-amount {
   font-weight: bold;
-  border-top: 2px solid #dee2e6;
-  padding-top: 12px;
-  margin-top: 8px;
-}
-
-.footer {
-  margin-top: 60px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-  font-size: 12px;
-  color: #666;
-}
-
-.payment-info {
-  margin-bottom: 20px;
-}
-
-.payment-info h4 {
-  font-size: 14px;
-  color: #333;
-  margin: 0 0 8px 0;
-}
-
-.terms {
-  margin-bottom: 20px;
-}
-
-.legal {
-  font-size: 10px;
-  color: #999;
 }
 
 @media print {
   .invoice-print {
     padding: 0;
-    max-width: none;
   }
-
-  .preview-mode {
-    box-shadow: none;
-    margin: 0;
+  
+  .invoice-container {
+    height: 100vh;
+    page-break-after: avoid;
+    page-break-inside: avoid;
   }
 }
 </style> 

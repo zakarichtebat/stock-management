@@ -170,58 +170,87 @@ export class InvoiceService {
 
     doc.on('data', buffers.push.bind(buffers));
 
-    // Add company logo and info
-    doc.fontSize(20).text('Your Company Name', { align: 'right' });
-    doc.fontSize(10).text('123 Business Street', { align: 'right' });
-    doc.text('City, Country', { align: 'right' });
-    doc.moveDown();
+    // Set blue color for borders
+    const blueColor = '#000080';
+    doc.lineWidth(1);
 
-    // Add invoice details
-    doc.fontSize(20).text('FACTURE', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Numéro: ${invoice.number}`);
-    doc.text(`Date: ${invoice.date.toLocaleDateString()}`);
-    doc.text(`Échéance: ${invoice.dueDate.toLocaleDateString()}`);
-    doc.moveDown();
+    // Draw main outer rectangle with rounded corners
+    doc.roundedRect(40, 40, 520, 700, 10).strokeColor(blueColor).stroke();
 
-    // Add client info
-    doc.text('Client:');
-    doc.text(invoice.clientName);
-    if (invoice.clientEmail) doc.text(invoice.clientEmail);
-    if (invoice.clientAddress) doc.text(invoice.clientAddress);
-    doc.moveDown();
-
-    // Add items table
-    const tableTop = doc.y;
-    doc.font('Helvetica-Bold');
+    // Draw header section
+    doc.strokeColor(blueColor);
+    doc.fontSize(12);
     
-    // Table headers
-    ['Produit', 'Quantité', 'Prix unitaire', 'Total'].forEach((text, i) => {
-      doc.text(text, 50 + (i * 140), tableTop, { width: 140, align: 'left' });
-    });
+    // Draw "Le" box on the left
+    doc.roundedRect(50, 50, 100, 30, 5).stroke();
+    
+    // Draw "Facture N°" box
+    doc.roundedRect(300, 50, 250, 25, 5).stroke();
+    doc.text('Facture N°', 310, 58);
+    doc.text(invoice.number.slice(-2), 420, 58);
 
-    // Table content
-    doc.font('Helvetica');
-    let y = tableTop + 20;
-    invoice.invoiceitem.forEach(item => {
-      doc.text(item.product.name, 50, y, { width: 140 });
-      doc.text(item.quantity.toString(), 190, y, { width: 140 });
-      doc.text(`${item.unitPrice.toFixed(2)} MAD`, 330, y, { width: 140 });
-      doc.text(`${item.total.toFixed(2)} MAD`, 470, y, { width: 140 });
-      y += 20;
-    });
-
-    // Add totals
-    doc.moveDown();
-    doc.text(`Sous-total: ${invoice.subtotal.toFixed(2)} MAD`, { align: 'right' });
-    if (invoice.discount > 0) {
-      doc.text(`Remise (${invoice.discount}%): ${((invoice.subtotal * invoice.discount) / 100).toFixed(2)} MAD`, { align: 'right' });
+    // Draw "M:" line
+    doc.roundedRect(300, 80, 250, 25, 5).stroke();
+    doc.text('M:', 310, 88);
+    if (invoice.clientName) {
+      doc.text(invoice.clientName, 330, 88);
     }
-    doc.font('Helvetica-Bold');
-    doc.text(`Total: ${invoice.total.toFixed(2)} MAD`, { align: 'right' });
+
+    // Draw table starting at y=120
+    const tableTop = 120;
+    const tableLeft = 50;
+    const tableWidth = 500;
+    const tableHeight = 550; // Reduced height to make room for total
+
+    // Draw table outer border
+    doc.roundedRect(tableLeft, tableTop, tableWidth, tableHeight, 5).stroke();
+
+    // Draw table headers
+    doc.text('Quantité', 60, tableTop + 10);
+    doc.text('Désignation', 150, tableTop + 10);
+    doc.text('P. Unit.', 380, tableTop + 10);
+    doc.text('P. Total', 460, tableTop + 10);
+
+    // Draw vertical lines for columns
+    doc.moveTo(130, tableTop).lineTo(130, tableTop + tableHeight).stroke();
+    doc.moveTo(370, tableTop).lineTo(370, tableTop + tableHeight).stroke();
+    doc.moveTo(450, tableTop).lineTo(450, tableTop + tableHeight).stroke();
+
+    // Draw horizontal line under headers
+    doc.moveTo(tableLeft, tableTop + 30).lineTo(tableLeft + tableWidth, tableTop + 30).stroke();
+
+    // Draw dotted lines for rows
+    const rowHeight = 25;
+    const numberOfRows = Math.floor((tableHeight - 40) / rowHeight);
+    doc.dash(2, { space: 2 });
+
+    for (let i = 1; i <= numberOfRows; i++) {
+      const y = tableTop + 30 + (i * rowHeight);
+      doc.moveTo(tableLeft, y).lineTo(tableLeft + tableWidth, y).stroke();
+    }
+
+    // Reset dash
+    doc.undash();
+
+    // Add items if any
+    let y = tableTop + 40;
+    if (invoice.invoiceitem) {
+      invoice.invoiceitem.forEach(item => {
+        doc.text(item.quantity.toString(), 60, y);
+        doc.text(item.product.name, 140, y);
+        doc.text(item.unitPrice.toFixed(2), 380, y);
+        doc.text(item.total.toFixed(2), 460, y);
+        y += rowHeight;
+      });
+    }
+
+    // Add total section at the bottom
+    const totalBoxY = tableTop + tableHeight + 20;
+    doc.roundedRect(300, totalBoxY, 250, 30, 5).stroke();
+    doc.text('Total:', 310, totalBoxY + 10);
+    doc.text(invoice.total.toFixed(2), 460, totalBoxY + 10);
 
     doc.end();
-
     return Buffer.concat(buffers);
   }
 } 
